@@ -1,0 +1,33 @@
+// src/app/(auth)/login/page.tsx
+import { LoginForm } from '@/components/auth/LoginForm';
+import { Leaf } from 'lucide-react';
+
+export default function LoginPage() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-background to-secondary p-4">
+      <div className="w-full max-w-md space-y-8">
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center rounded-full bg-primary p-3 mb-4">
+            <Leaf className="h-10 w-10 text-primary-foreground" />
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight text-primary">
+            Lifeweaver Notes
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            Welcome back! Please sign in to continue.
+          </p>
+        </div>
+        <LoginForm />
+         <div className="mt-4 text-center text-sm text-muted-foreground">
+          <p>Demo users:</p>
+          <ul className="list-disc list-inside">
+            <li>superadmin@lifeweaver.com</li>
+            <li>admin@lifeweaver.com</li>
+            <li>clinician@lifeweaver.com</li>
+            <li>(Or any other email to login as a clinician)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
