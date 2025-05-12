@@ -11,11 +11,11 @@ import { Lightbulb } from 'lucide-react';
 
 // Mock data - In a real app, this would be fetched
 const MOCK_CLIENTS: Client[] = [
-  { id: 'client-1', name: 'John Doe', dateAdded: new Date(2023, 0, 15).toISOString() },
-  { id: 'client-2', name: 'Jane Smith', dateAdded: new Date(2023, 2, 10).toISOString() },
-  { id: 'client-3', name: 'Alice Johnson', dateAdded: new Date(2022, 11, 1).toISOString() },
-  { id: 'client-4', name: 'Bob Williams', dateAdded: new Date(2023, 5, 20).toISOString() },
-  { id: 'client-5', name: 'Charlie Brown', dateAdded: new Date(2023, 8, 5).toISOString() },
+  { id: 'client-1', name: 'John Doe', dateAdded: new Date(2023, 0, 15).toISOString(), teamMemberIds: ['user_clinician'] },
+  { id: 'client-2', name: 'Jane Smith', dateAdded: new Date(2023, 2, 10).toISOString(), teamMemberIds: ['user_clinician2', 'user_clinician'] },
+  { id: 'client-3', name: 'Alice Johnson', dateAdded: new Date(2022, 11, 1).toISOString(), teamMemberIds: ['user_clinician'] },
+  { id: 'client-4', name: 'Bob Williams', dateAdded: new Date(2023, 5, 20).toISOString(), teamMemberIds: [] },
+  { id: 'client-5', name: 'Charlie Brown', dateAdded: new Date(2023, 8, 5).toISOString(), teamMemberIds: ['user_clinician2'] },
 ];
 
 const MOCK_SESSIONS: SessionNote[] = [
@@ -47,7 +47,10 @@ export default function DashboardPage() {
   const renderDashboard = () => {
     switch (user.role) {
       case 'Clinician':
-        return <ClinicianDashboard user={user} clients={MOCK_CLIENTS} team={MOCK_TEAM} />;
+        const clinicianClients = MOCK_CLIENTS.filter(client => 
+          client.teamMemberIds?.includes(user.id)
+        );
+        return <ClinicianDashboard user={user} clients={clinicianClients} team={MOCK_TEAM} />;
       case 'Admin':
         return <AdminDashboard user={user} recentSessions={MOCK_SESSIONS.sort((a,b) => new Date(b.dateOfSession).getTime() - new Date(a.dateOfSession).getTime())} clients={MOCK_CLIENTS} team={MOCK_TEAM} />;
       case 'Super Admin':
@@ -77,3 +80,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

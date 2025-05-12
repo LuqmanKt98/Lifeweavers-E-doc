@@ -12,6 +12,7 @@ export interface Client {
   id: string;
   name: string;
   dateAdded: string; // ISO string
+  teamMemberIds?: string[]; // Array of clinician User IDs
   // Other client-specific info can be added here
 }
 
@@ -28,3 +29,4 @@ export interface SessionNote {
   updatedAt: string; // ISO string
   // For version history, more fields would be needed
 }
+

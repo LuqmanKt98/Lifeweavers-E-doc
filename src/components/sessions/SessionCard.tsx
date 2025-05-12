@@ -10,9 +10,10 @@ import { Button } from '@/components/ui/button';
 
 interface SessionCardProps {
   session: SessionNote;
+  canModifyNotes: boolean;
 }
 
-export default function SessionCard({ session }: SessionCardProps) {
+export default function SessionCard({ session, canModifyNotes }: SessionCardProps) {
   const getInitials = (name: string) => {
     const names = name.split(' ');
     if (names.length === 1) return names[0][0].toUpperCase();
@@ -61,11 +62,13 @@ export default function SessionCard({ session }: SessionCardProps) {
         <p className="text-xs text-muted-foreground">
           Last updated: {format(new Date(session.updatedAt), 'Pp')}
         </p>
-        {/* Add edit/delete buttons based on user permissions here */}
-        <Button variant="outline" size="sm">
-            <Edit3 className="mr-2 h-4 w-4" /> Edit Session
-        </Button>
+        {canModifyNotes && (
+          <Button variant="outline" size="sm">
+              <Edit3 className="mr-2 h-4 w-4" /> Edit Session
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );
 }
+
