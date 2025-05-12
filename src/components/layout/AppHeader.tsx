@@ -14,10 +14,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, UserCircle, Settings, Moon, Sun, Menu, X } from 'lucide-react';
-// import Link from 'next/link'; // Link removed as Logo is removed
+import { LogOut, UserCircle, Settings, Moon, Sun, Menu, X, CalendarDays, Clock } from 'lucide-react'; // Added CalendarDays, Clock
 import { useTheme } from "next-themes";
-// import Logo from '@/components/Logo'; // Logo component removed
+import { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 
 interface AppHeaderProps {
   user: User;
@@ -29,6 +29,19 @@ interface AppHeaderProps {
 export default function AppHeader({ user, toggleSidebar, sidebarOpen, pageTitle }: AppHeaderProps) {
   const { logout } = useAuth();
   const { setTheme, theme } = useTheme();
+  const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
+
+  useEffect(() => {
+    // Set initial time on mount (client-side) to avoid hydration mismatch
+    setCurrentDateTime(new Date());
+
+    const timerId = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000); // Update every second
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(timerId);
+  }, []); // Empty dependency array ensures this runs once on mount and cleans up on unmount
 
   const getInitials = (name: string) => {
     const names = name.split(' ');
@@ -45,12 +58,20 @@ export default function AppHeader({ user, toggleSidebar, sidebarOpen, pageTitle 
          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-2 hidden md:inline-flex flex-shrink-0"> {/* Increased margin slightly */}
           <Menu className="h-6 w-6" />
         </Button>
-        {/* Logo removed from here */}
         <h1 className="text-xl font-semibold text-foreground truncate">
           {pageTitle}
         </h1>
       </div>
-      <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0"> {/* flex-shrink-0 to prevent this from being squeezed */}
+      <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+        {currentDateTime && (
+          <div className="text-xs sm:text-sm text-muted-foreground hidden lg:flex items-center gap-1.5" aria-live="polite" aria-atomic="true">
+            <CalendarDays className="h-4 w-4 flex-shrink-0" />
+            <span suppressHydrationWarning>{format(currentDateTime, 'eeee, MMM d, yyyy')}</span>
+            <span className="text-muted-foreground/50">|</span>
+            <Clock className="h-4 w-4 flex-shrink-0" />
+            <span suppressHydrationWarning>{format(currentDateTime, 'HH:mm:ss')}</span>
+          </div>
+        )}
         <Button
             variant="ghost"
             size="icon"
