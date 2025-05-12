@@ -8,7 +8,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <div className="inline-block mb-4">
-            <Logo className="h-auto" width={250} height={62.5}/> {/* Adjusted for PNG */}
+            <Logo width={250} height={62.5}/> {/* Removed h-auto, relying on width/height props */}
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-primary">
             LWV CLINIC E-DOC

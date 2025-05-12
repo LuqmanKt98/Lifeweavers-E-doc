@@ -46,7 +46,7 @@ export default function AppHeader({ user, toggleSidebar, sidebarOpen, pageTitle 
           <Menu className="h-6 w-6" />
         </Button>
         <Link href="/dashboard" className="flex items-center flex-shrink-0 mr-2">
-           <Logo iconOnly width={32} height={32} className="h-8 w-auto" />
+           <Logo iconOnly width={32} height={32} className="h-8 w-8" /> {/* Changed w-auto to w-8 */}
         </Link>
         <h1 className="text-xl font-semibold text-foreground truncate"> {/* Removed hidden sm:block */}
           {pageTitle}

@@ -3,38 +3,26 @@ import { cn } from "@/lib/utils";
 import Image from 'next/image';
 import type { ImageProps } from 'next/image';
 
-interface LogoProps extends Omit<ImageProps, 'src' | 'alt'> {
+interface LogoProps extends Omit<ImageProps, 'src' | 'alt' | 'priority'> {
   iconOnly?: boolean;
-  className?: string;
+  // className is part of ImageProps, so it's implicitly included
 }
 
 const Logo = ({ className, iconOnly = false, width, height, ...props }: LogoProps) => {
   const imageSrc = "/logo.png"; // Assumes logo.png is in the public folder
   const altText = "LWV CLINIC E-DOC Logo";
 
-  if (iconOnly) {
-    return (
-      <Image
-        src={imageSrc}
-        alt={altText}
-        width={width || 32} // Default icon size
-        height={height || 32} // Default icon size
-        className={cn(className)}
-        priority // Preload logo if it's critical for LCP
-        {...props}
-      />
-    );
-  }
+  const imageWidth = width || (iconOnly ? 32 : 200);
+  const imageHeight = height || (iconOnly ? 32 : 50);
 
   return (
     <Image
       src={imageSrc}
       alt={altText}
-      width={width || 200} // Default full logo width
-      height={height || 50}  // Default full logo height (adjust based on actual image aspect ratio)
-      className={cn(className)}
-      priority
-      style={{ objectFit: 'contain' }} // Ensures the image scales correctly within bounds
+      width={imageWidth}
+      height={imageHeight}
+      className={cn("object-contain", className)} // Apply object-contain and merge with passed className
+      priority // Preload logo if it's critical for LCP
       {...props}
     />
   );
