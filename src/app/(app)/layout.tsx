@@ -1,4 +1,3 @@
-
 // src/app/(app)/layout.tsx
 "use client";
 
@@ -87,6 +86,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       return 'Client Session Notes'; 
     }
     if (currentPathname === '/admin/users') return 'User Management';
+    if (currentPathname === '/admin/cases') return 'Cases Management';
     if (currentPathname === '/notifications') return 'Notifications';
     if (currentPathname === '/messages') return 'Messages';
     // Default title if no match

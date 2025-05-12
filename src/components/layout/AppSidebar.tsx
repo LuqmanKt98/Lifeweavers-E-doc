@@ -1,4 +1,3 @@
-
 // src/components/layout/AppSidebar.tsx
 "use client";
 
@@ -8,7 +7,7 @@ import type { Client } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { Home, Users, Settings, ChevronLeft, ChevronRight, PlusCircle, Bell, MessageSquare, LifeBuoy } from 'lucide-react';
+import { Home, Users, Settings, ChevronLeft, ChevronRight, PlusCircle, Bell, MessageSquare, LifeBuoy, FolderSync } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 // import Logo from '@/components/Logo'; // Logo component removed
 
@@ -33,6 +32,10 @@ export default function AppSidebar({ clients, isOpen, toggleSidebar }: AppSideba
     // Ensure User Management is not duplicated if already there
     if (!navItems.find(item => item.href === '/admin/users')) {
       navItems.push({ href: '/admin/users', label: 'User Management', icon: Settings });
+    }
+    // Add Cases Management link
+    if (!navItems.find(item => item.href === '/admin/cases')) {
+      navItems.push({ href: '/admin/cases', label: 'Cases Management', icon: FolderSync });
     }
   }
   
@@ -137,4 +140,3 @@ export default function AppSidebar({ clients, isOpen, toggleSidebar }: AppSideba
     </>
   );
 }
-
