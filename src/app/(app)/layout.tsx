@@ -103,13 +103,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <main className="flex-1 overflow-y-auto">
           <ScrollArea className="h-full">
             <div className="p-4 md:p-6 lg:p-8">
-             {activeSpecialNotifications.length > 0 && (
-                <SpecialNotificationBanner
-                  notifications={activeSpecialNotifications}
-                  onDismiss={handleDismissSpecialNotification}
-                />
-              )}
              {children}
+             {activeSpecialNotifications.length > 0 && (
+                <div className="mt-6"> {/* Added margin-top for spacing */}
+                  <SpecialNotificationBanner
+                    notifications={activeSpecialNotifications}
+                    onDismiss={handleDismissSpecialNotification}
+                  />
+                </div>
+              )}
             </div>
           </ScrollArea>
         </main>
@@ -117,3 +119,4 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+
