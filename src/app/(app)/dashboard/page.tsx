@@ -75,7 +75,7 @@ export default function DashboardPage() {
             {getWelcomeMessage()}, {user.name}!
           </CardTitle>
           <CardDescription className="text-lg text-foreground/80">
-            Here's what's happening in Lifeweaver Notes today.
+            Here's what's happening in LWV CLINIC E-DOC today.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex items-center gap-2 text-sm text-foreground/70">

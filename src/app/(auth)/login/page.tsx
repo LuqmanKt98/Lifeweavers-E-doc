@@ -11,7 +11,7 @@ export default function LoginPage() {
             <Logo className="h-auto" width={250} height={62.5}/> {/* Adjusted for PNG */}
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-primary">
-            Lifeweaver Notes
+            LWV CLINIC E-DOC
           </h1>
           <p className="mt-2 text-muted-foreground">
             Welcome back! Please sign in to continue.

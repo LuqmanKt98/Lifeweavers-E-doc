@@ -22,7 +22,7 @@ export default function HomePage() {
   // You can render a loading spinner here if preferred
   return (
     <div className="flex h-screen w-full items-center justify-center bg-background">
-      <p className="text-foreground">Loading Lifeweaver Notes...</p>
+      <p className="text-foreground">Loading LWV CLINIC E-DOC...</p>
       {/* Optionally, add a spinner icon here */}
     </div>
   );

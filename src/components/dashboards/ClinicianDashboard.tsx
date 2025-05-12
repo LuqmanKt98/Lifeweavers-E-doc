@@ -72,7 +72,7 @@ export default function ClinicianDashboard({ user, clients, team, sessions }: Cl
             <Briefcase className="h-6 w-6 text-primary" />
             Team Details
           </CardTitle>
-          <CardDescription>Your colleagues at Lifeweaver.</CardDescription>
+          <CardDescription>Your colleagues at LWV CLINIC E-DOC.</CardDescription>
         </CardHeader>
         <CardContent>
           {team.filter(member => member.id !== user.id).length > 0 ? (

@@ -10,7 +10,7 @@ interface LogoProps extends Omit<ImageProps, 'src' | 'alt'> {
 
 const Logo = ({ className, iconOnly = false, width, height, ...props }: LogoProps) => {
   const imageSrc = "/logo.png"; // Assumes logo.png is in the public folder
-  const altText = "Lifeweaver Electronic Documentation Logo";
+  const altText = "LWV CLINIC E-DOC Logo";
 
   if (iconOnly) {
     return (

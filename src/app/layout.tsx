@@ -8,7 +8,7 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'Lifeweaver Notes',
+  title: 'LWV CLINIC E-DOC',
   description: 'Collaborative documentation for rehab therapy teams.',
 };
 

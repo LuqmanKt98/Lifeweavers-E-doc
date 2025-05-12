@@ -115,7 +115,7 @@ export default function AdminDashboard({ user, recentSessions, allSessions, clie
             <Briefcase className="h-6 w-6 text-primary" />
             Team Details
           </CardTitle>
-          <CardDescription>Overview of the Lifeweaver team.</CardDescription>
+          <CardDescription>Overview of the LWV CLINIC E-DOC team.</CardDescription>
         </CardHeader>
         <CardContent>
            {team.length > 0 ? (

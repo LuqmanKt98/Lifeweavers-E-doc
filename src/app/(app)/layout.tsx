@@ -32,7 +32,7 @@ const MOCK_SPECIAL_NOTIFICATIONS_DATA: SpecialNotification[] = [
   {
     id: 'maintenance-banner-1',
     title: 'System Maintenance Scheduled',
-    message: 'Lifeweaver Notes will undergo maintenance on Sunday, July 28th, from 2 AM to 3 AM UTC. The service might be temporarily unavailable.',
+    message: 'LWV CLINIC E-DOC will undergo maintenance on Sunday, July 28th, from 2 AM to 3 AM UTC. The service might be temporarily unavailable.',
     type: 'warning',
   },
   {
@@ -90,7 +90,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (currentPathname === '/notifications') return 'Notifications';
     if (currentPathname === '/messages') return 'Messages';
     // Default title if no match
-    return 'Lifeweaver Notes';
+    return 'LWV CLINIC E-DOC';
   };
 
   const pageTitle = getPageTitle(pathname);

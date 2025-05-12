@@ -14,10 +14,10 @@ import { useToast } from '@/hooks/use-toast';
 
 // Mock notifications data
 const MOCK_NOTIFICATIONS_DATA: Notification[] = [
-  { id: 'notif-1', type: 'admin_broadcast', title: 'System Maintenance Scheduled', content: 'Lifeweaver Notes will be undergoing scheduled maintenance on Sunday at 2 AM for approximately 1 hour.', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), read: false },
+  { id: 'notif-1', type: 'admin_broadcast', title: 'System Maintenance Scheduled', content: 'LWV CLINIC E-DOC will be undergoing scheduled maintenance on Sunday at 2 AM for approximately 1 hour.', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), read: false },
   { id: 'notif-2', type: 'team_alert', title: 'New Client "Alice Johnson" Assigned', content: 'You have been added to the team for client Alice Johnson. Please review their profile.', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), read: true, recipientUserIds: ['user_clinician'], relatedLink: '/clients/client-3' },
   { id: 'notif-3', type: 'system_update', title: 'Session Note Updated', content: 'Casey Clinician updated a session note for John Doe.', timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), read: false, recipientUserIds: ['user_admin'], relatedLink: '/clients/client-1' },
-  { id: 'notif-4', type: 'admin_broadcast', title: 'Welcome to Lifeweaver Notes!', content: 'We are excited to have you on board. Explore the features and let us know if you have any questions.', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), read: true },
+  { id: 'notif-4', type: 'admin_broadcast', title: 'Welcome to LWV CLINIC E-DOC!', content: 'We are excited to have you on board. Explore the features and let us know if you have any questions.', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), read: true },
   { id: 'notif-5', type: 'team_alert', title: 'Client "Bob Williams" Progress Review', content: 'A progress review meeting for Bob Williams is scheduled for next Tuesday. Please prepare your notes.', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), read: false, recipientUserIds: ['user_clinician', 'user_clinician2'], relatedLink: '/clients/client-4' },
 ];
 
