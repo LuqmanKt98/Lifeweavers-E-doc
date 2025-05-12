@@ -5,7 +5,7 @@
 import type { Notification } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Bell, AlertTriangle, Info, CheckCircle, Link as LinkIcon } from 'lucide-react';
+import { Bell, AlertTriangle, Info, CheckCircle, Link as LinkIcon, Edit, Trash2 } from 'lucide-react'; // Added Edit, Trash2
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -13,10 +13,12 @@ import { cn } from '@/lib/utils';
 interface NotificationItemProps {
   notification: Notification;
   onMarkAsRead: (id: string) => void;
-  onArchive?: (id: string) => void; // Optional: if archive functionality is desired
+  onArchive: (id: string) => void; // Used for archive by regular users, delete by SuperAdmin
+  isSuperAdminView?: boolean; // New prop
+  onEdit?: (id: string) => void; // New prop for SuperAdmin to trigger edit
 }
 
-export default function NotificationItem({ notification, onMarkAsRead, onArchive }: NotificationItemProps) {
+export default function NotificationItem({ notification, onMarkAsRead, onArchive, isSuperAdminView, onEdit }: NotificationItemProps) {
   const getIcon = () => {
     switch (notification.type) {
       case 'admin_broadcast':
@@ -31,7 +33,12 @@ export default function NotificationItem({ notification, onMarkAsRead, onArchive
   };
 
   return (
-    <Card className={cn("shadow-sm hover:shadow-md transition-shadow", notification.read ? "bg-secondary/30" : "bg-card")}>
+    <Card className={cn(
+        "shadow-sm hover:shadow-md transition-shadow", 
+        notification.read && !isSuperAdminView ? "bg-secondary/30" : "bg-card",
+        isSuperAdminView && notification.read ? "border-green-500/30" : "", // Example: Highlight read for SA
+        isSuperAdminView && !notification.read ? "border-orange-500/30" : "" // Example: Highlight unread for SA
+    )}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -42,6 +49,12 @@ export default function NotificationItem({ notification, onMarkAsRead, onArchive
             {formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true })}
           </span>
         </div>
+        {isSuperAdminView && (
+            <p className="text-xs text-muted-foreground">
+                Type: {notification.type} {notification.recipientUserIds ? `| Targets: ${notification.recipientUserIds.join(', ')}` : '| Broadcast'}
+                {notification.read ? ' | Read by some/all' : ' | May be Unread'}
+            </p>
+        )}
       </CardHeader>
       <CardContent className="pb-4">
         <p className="text-sm text-foreground/90">{notification.content}</p>
@@ -57,15 +70,26 @@ export default function NotificationItem({ notification, onMarkAsRead, onArchive
         )}
       </CardContent>
       <CardFooter className="flex justify-end gap-2 border-t pt-3">
-        {!notification.read && (
-          <Button variant="outline" size="sm" onClick={() => onMarkAsRead(notification.id)}>
-            <CheckCircle className="mr-2 h-4 w-4" /> Mark as Read
-          </Button>
-        )}
-        {onArchive && ( // Example: Conditionally render archive button
-          <Button variant="ghost" size="sm" onClick={() => onArchive(notification.id)} className="text-muted-foreground hover:text-destructive">
-            Archive
-          </Button>
+        {isSuperAdminView ? (
+          <>
+            <Button variant="outline" size="sm" onClick={() => onEdit?.(notification.id)} disabled>
+              <Edit className="mr-2 h-4 w-4" /> Edit
+            </Button>
+            <Button variant="destructive" size="sm" onClick={() => onArchive(notification.id)}>
+              <Trash2 className="mr-2 h-4 w-4" /> Delete
+            </Button>
+          </>
+        ) : (
+          <>
+            {!notification.read && (
+              <Button variant="outline" size="sm" onClick={() => onMarkAsRead(notification.id)}>
+                <CheckCircle className="mr-2 h-4 w-4" /> Mark as Read
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" onClick={() => onArchive(notification.id)} className="text-muted-foreground hover:text-destructive">
+              Archive
+            </Button>
+          </>
         )}
       </CardFooter>
     </Card>

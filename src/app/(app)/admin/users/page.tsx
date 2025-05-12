@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { User } from '@/lib/types';
-import { ShieldAlert, UserPlus, Edit, Trash2 } from 'lucide-react';
+import { ShieldAlert, UserCog, Edit, Trash2 } from 'lucide-react'; // Changed UserPlus to UserCog
 
 // Mock users data for demonstration
 const MOCK_ALL_USERS: User[] = [
@@ -58,7 +58,7 @@ export default function UserManagementPage() {
           </div>
           {user.role === 'Super Admin' && (
              <Button>
-                <UserPlus className="mr-2 h-4 w-4" /> Add New User
+                <UserCog className="mr-2 h-4 w-4" /> Add New User
              </Button>
           )}
         </CardHeader>

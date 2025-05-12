@@ -6,18 +6,17 @@ import AdminDashboard from './AdminDashboard'; // Super Admin can see everything
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ShieldCheck, Users2 } from 'lucide-react';
+import { ShieldCheck, UsersCog, MessagesSquare, ListChecks } from 'lucide-react'; // Added MessagesSquare, ListChecks, changed Users2 to UsersCog
 
 interface SuperAdminDashboardProps {
   user: User;
   recentSessions: SessionNote[];
-  allSessions: SessionNote[]; // Added for calendar functionality via AdminDashboard
+  allSessions: SessionNote[];
   clients: Client[];
   team: User[];
 }
 
 export default function SuperAdminDashboard({ user, recentSessions, allSessions, clients, team }: SuperAdminDashboardProps) {
-  // Super Admin has all Admin capabilities, plus user management and potentially more.
   return (
     <div className="space-y-6">
       <Card className="border-accent bg-accent/10">
@@ -27,20 +26,68 @@ export default function SuperAdminDashboard({ user, recentSessions, allSessions,
             Super Admin Panel
           </CardTitle>
           <CardDescription className="text-accent-foreground/70">
-            You have full access to the system, including user management and all client data.
+            You have full access to system data and administrative functions.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Button asChild variant="outline" className="border-accent text-accent-foreground hover:bg-accent/30">
-            <Link href="/admin/users">
-              <Users2 className="mr-2 h-4 w-4" /> Manage Users
-            </Link>
-          </Button>
-          {/* Add other super admin specific actions here */}
-        </CardContent>
       </Card>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UsersCog className="h-5 w-5 text-primary" /> User Management
+            </CardTitle>
+            <CardDescription>
+              Add, edit, or remove users and manage their roles.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="default">
+              <Link href="/admin/users">
+                 Manage All Users
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessagesSquare className="h-5 w-5 text-primary" /> Message Oversight
+            </CardTitle>
+            <CardDescription>
+              Access your messages. Full cross-user message management is a backend-dependent feature.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="default">
+              <Link href="/messages">
+                Open Messages
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="md:col-span-2"> {/* Spans two columns on medium screens and above */}
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ListChecks className="h-5 w-5 text-primary" /> Notification Control Center
+            </CardTitle>
+            <CardDescription>
+              Review, edit, or delete all system notifications, including broadcasts and system-generated alerts.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="default">
+              <Link href="/notifications">
+                Manage Notifications
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
       
-      {/* Inherit Admin Dashboard sections, passing allSessions for the calendar */}
+      {/* Inherit Admin Dashboard sections */}
       <AdminDashboard user={user} recentSessions={recentSessions} allSessions={allSessions} clients={clients} team={team} />
     </div>
   );
