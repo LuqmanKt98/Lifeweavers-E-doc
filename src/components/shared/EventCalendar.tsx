@@ -52,7 +52,7 @@ export default function EventCalendar({ sessions }: EventCalendarProps) {
     <Card className="shadow-lg">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-xl font-semibold text-primary">
-            <CalendarIcon className="h-6 w-6" /> Session Calendar
+            <CalendarIcon className="h-6 w-6" /> Appointments
         </CardTitle>
         <CardDescription>
             View past and upcoming sessions. Click on a day to see details.
@@ -108,3 +108,4 @@ export default function EventCalendar({ sessions }: EventCalendarProps) {
     </Card>
   );
 }
+
