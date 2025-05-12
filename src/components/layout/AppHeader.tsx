@@ -16,6 +16,7 @@ import {
 import { LogOut, UserCircle, Settings, Moon, Sun, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { useTheme } from "next-themes";
+import Logo from '@/components/Logo'; // Import the new Logo component
 
 interface AppHeaderProps {
   user: User;
@@ -42,8 +43,8 @@ export default function AppHeader({ user, toggleSidebar, sidebarOpen }: AppHeade
          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-2 hidden md:inline-flex">
           <Menu className="h-6 w-6" />
         </Button>
-        <Link href="/dashboard">
-          <h1 className="text-xl font-semibold text-primary">Lifeweaver Notes</h1>
+        <Link href="/dashboard" className="flex items-center">
+          <Logo className="h-8 w-auto" /> {/* Use Logo component */}
         </Link>
       </div>
       <div className="flex items-center gap-4">

@@ -8,8 +8,9 @@ import type { Client } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { Home, Users, Settings, Leaf, ChevronLeft, ChevronRight, PlusCircle, Bell, MessageSquare } from 'lucide-react';
+import { Home, Users, Settings, ChevronLeft, ChevronRight, PlusCircle, Bell, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import Logo from '@/components/Logo'; // Import the new Logo component
 
 interface AppSidebarProps {
   clients: Client[];
@@ -59,9 +60,8 @@ export default function AppSidebar({ clients, isOpen, toggleSidebar }: AppSideba
         )}
       >
         <div className={cn("flex items-center border-b border-sidebar-border px-4", isOpen ? "h-16 justify-between" : "h-16 justify-center")}>
-          <Link href="/dashboard" className={cn("flex items-center gap-2", !isOpen && "justify-center")}>
-            <Leaf className="h-7 w-7 text-primary" />
-            {isOpen && <span className="text-xl font-semibold text-primary">Lifeweaver</span>}
+          <Link href="/dashboard" className={cn("flex items-center gap-2 group", !isOpen && "justify-center")}>
+             <Logo className={cn("h-8 w-auto transition-all duration-300", isOpen ? "max-w-full" : "max-w-[2rem]")} iconOnly={!isOpen} />
           </Link>
           {isOpen && (
             <Button variant="ghost" size="icon" onClick={toggleSidebar} className="md:hidden">

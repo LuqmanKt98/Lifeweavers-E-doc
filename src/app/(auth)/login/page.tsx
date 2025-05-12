@@ -1,14 +1,14 @@
 // src/app/(auth)/login/page.tsx
 import { LoginForm } from '@/components/auth/LoginForm';
-import { Leaf } from 'lucide-react';
+import Logo from '@/components/Logo'; // Import the new Logo component
 
 export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-background to-secondary p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <div className="inline-flex items-center justify-center rounded-full bg-primary p-3 mb-4">
-            <Leaf className="h-10 w-10 text-primary-foreground" />
+          <div className="inline-block mb-4">
+            <Logo className="h-16 w-auto" /> {/* Use Logo component */}
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-primary">
             Lifeweaver Notes
