@@ -30,6 +30,10 @@ export default function AdminDashboard({ user, recentSessions, allSessions, clie
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="lg:col-span-3 md:col-span-2">
+        <EventCalendar sessions={allSessions} />
+      </div>
+
       <Card className="lg:col-span-2">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -138,10 +142,6 @@ export default function AdminDashboard({ user, recentSessions, allSessions, clie
           )}
         </CardContent>
       </Card>
-
-      <div className="lg:col-span-3 md:col-span-2">
-        <EventCalendar sessions={allSessions} />
-      </div>
     </div>
   );
 }

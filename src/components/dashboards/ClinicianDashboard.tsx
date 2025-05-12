@@ -28,6 +28,10 @@ export default function ClinicianDashboard({ user, clients, team, sessions }: Cl
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="md:col-span-2 lg:col-span-3">
+        <EventCalendar sessions={sessions} />
+      </div>
+
       <Card className="lg:col-span-2">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -95,10 +99,6 @@ export default function ClinicianDashboard({ user, clients, team, sessions }: Cl
           )}
         </CardContent>
       </Card>
-      
-      <div className="md:col-span-2 lg:col-span-3">
-        <EventCalendar sessions={sessions} />
-      </div>
     </div>
   );
 }
