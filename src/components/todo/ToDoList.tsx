@@ -25,6 +25,8 @@ interface ToDoListProps {
   assignableTeamMembers: Pick<User, 'id' | 'name'>[]; // List of users who can be assigned tasks
 }
 
+const UNASSIGNED_TASK_VALUE = "__UNASSIGNED__"; // Specific non-empty string for "Unassigned" option
+
 export default function ToDoList({ 
     clientId, 
     tasks, 
@@ -43,10 +45,11 @@ export default function ToDoList({
   const handleSubmitNewTask = (e: FormEvent) => {
     e.preventDefault();
     if (!newTaskDescription.trim()) return;
-    onAddTask(newTaskDescription.trim(), newTaskDueDate || undefined, newTaskAssignedToUserId || undefined);
+    const assigneeId = newTaskAssignedToUserId === UNASSIGNED_TASK_VALUE || newTaskAssignedToUserId === '' ? undefined : newTaskAssignedToUserId;
+    onAddTask(newTaskDescription.trim(), newTaskDueDate || undefined, assigneeId);
     setNewTaskDescription('');
     setNewTaskDueDate('');
-    setNewTaskAssignedToUserId(''); // Reset assignee
+    setNewTaskAssignedToUserId(''); // Reset assignee to empty string to show placeholder
   };
 
   const sortedTasks = [...tasks].sort((a, b) => {
@@ -103,7 +106,7 @@ export default function ToDoList({
                             <SelectValue placeholder="Select Assignee" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="">Unassigned</SelectItem>
+                            <SelectItem value={UNASSIGNED_TASK_VALUE}>Unassigned</SelectItem>
                             {assignableTeamMembers.map(member => (
                                 <SelectItem key={member.id} value={member.id}>
                                     {member.name}
@@ -151,3 +154,4 @@ export default function ToDoList({
     </Card>
   );
 }
+
