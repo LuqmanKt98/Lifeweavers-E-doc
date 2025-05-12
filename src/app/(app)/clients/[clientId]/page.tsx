@@ -12,7 +12,7 @@ import ProgressReportModal from '@/components/reports/ProgressReportModal'; // I
 import { generateProgressReport } from '@/ai/flows/generate-progress-report'; // Import AI flow
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle, User as UserIcon, Users, Trash2, ListChecks, FileCog, Loader2 } from 'lucide-react';
+import { AlertTriangle, User as UserIconProp, Users, Trash2, ListChecks, FileCog, Loader2 } from 'lucide-react';
 import { format, formatDistanceToNow, addDays, startOfDay, isPast } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -57,8 +57,8 @@ const MOCK_ALL_CLINICIANS_FOR_SELECTION: User[] = [
 // Mock DB for ToDo Tasks
 let MOCK_TODO_TASKS_DB: Record<string, ToDoTask[]> = {
     'client-1': [
-        { id: 'todo-1-1', clientId: 'client-1', description: 'Follow up on home exercise plan adherence.', isDone: false, createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), addedByUserId: 'user_clinician', addedByUserName: 'Casey Clinician', dueDate: format(addDays(new Date(), 5), 'yyyy-MM-dd') },
-        { id: 'todo-1-2', clientId: 'client-1', description: 'Schedule next appointment.', isDone: true, createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), addedByUserId: 'user_admin', addedByUserName: 'Alex Admin', completedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), completedByUserId: 'user_admin', completedByUserName: 'Alex Admin' },
+        { id: 'todo-1-1', clientId: 'client-1', description: 'Follow up on home exercise plan adherence.', isDone: false, createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), addedByUserId: 'user_clinician', addedByUserName: 'Casey Clinician', assignedToUserId: 'user_clinician', assignedToUserName: 'Casey Clinician', dueDate: format(addDays(new Date(), 5), 'yyyy-MM-dd') },
+        { id: 'todo-1-2', clientId: 'client-1', description: 'Schedule next appointment.', isDone: true, createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), addedByUserId: 'user_admin', addedByUserName: 'Alex Admin', assignedToUserId: 'user_admin', assignedToUserName: 'Alex Admin', completedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), completedByUserId: 'user_admin', completedByUserName: 'Alex Admin' },
     ],
     'client-6': [ // Client added >30 days ago
         { 
@@ -67,6 +67,7 @@ let MOCK_TODO_TASKS_DB: Record<string, ToDoTask[]> = {
             isDone: true, 
             createdAt: MOCK_CLIENTS_DB['client-6'].dateAdded, 
             addedByUserId: 'system', addedByUserName: 'System', 
+            // assignedToUserId: 'user_clinician', assignedToUserName: 'Casey Clinician', // Example assignment
             dueDate: format(addDays(new Date(MOCK_CLIENTS_DB['client-6'].dateAdded), 30), 'yyyy-MM-dd'),
             isSystemGenerated: true,
             completedAt: format(addDays(new Date(MOCK_CLIENTS_DB['client-6'].dateAdded), 28), 'yyyy-MM-dd'), // Completed early
@@ -105,12 +106,22 @@ export default function ClientDetailPage() {
     let changesMade = false;
 
     const clientDateAdded = new Date(currentClient.dateAdded);
+    
+    const getFirstTeamMember = (): Pick<User, 'id' | 'name'> | undefined => {
+        if (currentClient.teamMemberIds && currentClient.teamMemberIds.length > 0) {
+            const firstMemberId = currentClient.teamMemberIds[0];
+            return MOCK_ALL_CLINICIANS_FOR_SELECTION.find(c => c.id === firstMemberId);
+        }
+        return undefined;
+    };
+
 
     // 1. 30-Day Progress Review
     const thirtyDayReviewDesc = "Conduct 1st Progress Review (30 days post-intake)";
     let thirtyDayReview = updatedTasks.find(task => task.description === thirtyDayReviewDesc && task.isSystemGenerated);
     if (!thirtyDayReview) {
       const dueDate30 = format(addDays(startOfDay(clientDateAdded), 30), 'yyyy-MM-dd');
+      const firstTeamMember = getFirstTeamMember();
       thirtyDayReview = {
         id: `sys-${currentClient.id}-30day-${Date.now()}`,
         clientId: currentClient.id,
@@ -119,16 +130,18 @@ export default function ClientDetailPage() {
         createdAt: new Date().toISOString(),
         addedByUserId: 'system',
         addedByUserName: 'System',
+        assignedToUserId: firstTeamMember?.id,
+        assignedToUserName: firstTeamMember?.name,
         dueDate: dueDate30,
         isSystemGenerated: true,
       };
       updatedTasks.push(thirtyDayReview);
       changesMade = true;
-      toast({ title: "System Task Added", description: `"${thirtyDayReviewDesc}" scheduled.`, variant: "default" });
+      toast({ title: "System Task Added", description: `"${thirtyDayReviewDesc}" scheduled. ${firstTeamMember ? `Assigned to ${firstTeamMember.name}.` : ''}`, variant: "default" });
     }
 
     // 2. 60-Day Follow-up Progress Review (if 30-day is done or significantly past due)
-    if (thirtyDayReview && (thirtyDayReview.isDone || (thirtyDayReview.dueDate && isPast(addDays(new Date(thirtyDayReview.dueDate), 1))))) { // if done or more than 1 day past due
+    if (thirtyDayReview && (thirtyDayReview.isDone || (thirtyDayReview.dueDate && isPast(addDays(new Date(thirtyDayReview.dueDate), 1))))) { 
         const sixtyDayFollowUpDesc = "Conduct Follow-up Progress Review (60 days after 1st)";
         const sixtyDayFollowUpExpectedDueDate = thirtyDayReview.dueDate ? addDays(startOfDay(new Date(thirtyDayReview.dueDate)), 60) : addDays(startOfDay(clientDateAdded), 30 + 60);
         
@@ -139,6 +152,7 @@ export default function ClientDetailPage() {
         );
 
         if (!existingSixtyDayReview) {
+            const firstTeamMember = getFirstTeamMember();
             const newSixtyDayReview: ToDoTask = {
                 id: `sys-${currentClient.id}-60day-${Date.now()}`,
                 clientId: currentClient.id,
@@ -147,12 +161,14 @@ export default function ClientDetailPage() {
                 createdAt: new Date().toISOString(),
                 addedByUserId: 'system',
                 addedByUserName: 'System',
+                assignedToUserId: firstTeamMember?.id,
+                assignedToUserName: firstTeamMember?.name,
                 dueDate: format(sixtyDayFollowUpExpectedDueDate, 'yyyy-MM-dd'),
                 isSystemGenerated: true,
             };
             updatedTasks.push(newSixtyDayReview);
             changesMade = true;
-            toast({ title: "System Task Added", description: `"${sixtyDayFollowUpDesc}" scheduled.`, variant: "default" });
+            toast({ title: "System Task Added", description: `"${sixtyDayFollowUpDesc}" scheduled. ${firstTeamMember ? `Assigned to ${firstTeamMember.name}.` : ''}`, variant: "default" });
         }
     }
     
@@ -204,8 +220,15 @@ export default function ClientDetailPage() {
     MOCK_SESSIONS_DB[clientId].sort((a, b) => new Date(b.dateOfSession).getTime() - new Date(a.dateOfSession).getTime());
   };
 
-  const handleAddToDoTask = (description: string, dueDate?: string) => {
+  const handleAddToDoTask = (description: string, dueDate?: string, assignedToUserId?: string) => {
     if (!user || !client) return;
+    
+    let assignedToUserName: string | undefined = undefined;
+    if (assignedToUserId) {
+        const assignee = MOCK_ALL_CLINICIANS_FOR_SELECTION.find(c => c.id === assignedToUserId);
+        assignedToUserName = assignee?.name;
+    }
+
     const newTask: ToDoTask = {
       id: `todo-${client.id}-${Date.now()}`,
       clientId: client.id,
@@ -214,13 +237,15 @@ export default function ClientDetailPage() {
       createdAt: new Date().toISOString(),
       addedByUserId: user.id,
       addedByUserName: user.name,
+      assignedToUserId: assignedToUserId,
+      assignedToUserName: assignedToUserName,
       dueDate: dueDate ? format(startOfDay(new Date(dueDate)), 'yyyy-MM-dd') : undefined,
       isSystemGenerated: false,
     };
     const updatedTasks = [...todoTasks, newTask];
     setTodoTasks(updatedTasks);
     MOCK_TODO_TASKS_DB[client.id] = updatedTasks;
-    toast({ title: "Task Added", description: `"${description}" has been added to the to-do list.` });
+    toast({ title: "Task Added", description: `"${description}" has been added. ${assignedToUserName ? `Assigned to ${assignedToUserName}.` : ''}` });
   };
 
   const handleToggleToDoTask = (taskId: string) => {
@@ -378,6 +403,11 @@ export default function ClientDetailPage() {
     c => !client.teamMemberIds?.includes(c.id)
   );
 
+  const teamMembersForAssignment = MOCK_ALL_CLINICIANS_FOR_SELECTION.filter(
+    c => client.teamMemberIds?.includes(c.id)
+  ).map(c => ({ id: c.id, name: c.name }));
+
+
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">
@@ -385,7 +415,7 @@ export default function ClientDetailPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
               <CardTitle className="text-3xl font-bold text-primary flex items-center gap-2">
-                <UserIcon className="h-8 w-8" /> {client.name}
+                <UserIconProp className="h-8 w-8" /> {client.name}
               </CardTitle>
               <CardDescription className="text-md text-muted-foreground mt-1">
                 Client since {formatDistanceToNow(new Date(client.dateAdded), { addSuffix: true })}.
@@ -480,6 +510,7 @@ export default function ClientDetailPage() {
             onRemoveTask={handleRemoveToDoTask}
             canModify={canModifyNotesAndTasks}
             canDeleteSystemGenerated={canDeleteSystemGeneratedTasks}
+            assignableTeamMembers={teamMembersForAssignment}
           />
       )}
 

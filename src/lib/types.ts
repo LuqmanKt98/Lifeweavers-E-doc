@@ -102,6 +102,8 @@ export interface ToDoTask {
   createdAt: string; // ISO string
   addedByUserId: string;
   addedByUserName: string;
+  assignedToUserId?: string; // New field: ID of the user the task is assigned to
+  assignedToUserName?: string; // New field: Name of the user the task is assigned to
   completedAt?: string; // ISO string
   completedByUserId?: string;
   completedByUserName?: string;

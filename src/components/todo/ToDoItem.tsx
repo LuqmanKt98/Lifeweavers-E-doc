@@ -6,7 +6,7 @@ import type { ToDoTask, User } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Calendar, Clock, Trash2, User as UserIcon } from 'lucide-react';
+import { Calendar, Clock, Trash2, User as UserIcon, UserCircle2 } from 'lucide-react'; // Added UserCircle2 for assignee
 import { format, formatDistanceToNow, isPast, isToday } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -79,6 +79,26 @@ export default function ToDoItem({ task, currentUser, onToggleTask, onRemoveTask
                 </TooltipProvider>
                  <span>Added {formatDistanceToNow(new Date(task.createdAt), { addSuffix: true })}</span>
             </div>
+
+            {task.assignedToUserId && task.assignedToUserName && (
+              <div className="flex items-center gap-1">
+                <TooltipProvider delayDuration={100}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-1">
+                        <UserCircle2 className="h-3.5 w-3.5 text-muted-foreground" />
+                        <Avatar className="h-4 w-4">
+                            <AvatarImage src={`https://picsum.photos/seed/${task.assignedToUserId}/20/20`} alt={task.assignedToUserName} data-ai-hint="user avatar"/>
+                            <AvatarFallback className="text-[8px]">{getInitials(task.assignedToUserName)}</AvatarFallback>
+                        </Avatar>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Assigned to {task.assignedToUserName}</p></TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <span>Assigned to {task.assignedToUserName}</span>
+              </div>
+            )}
 
             {task.isDone && task.completedByUserName && task.completedAt && (
               <div className="flex items-center gap-1">
