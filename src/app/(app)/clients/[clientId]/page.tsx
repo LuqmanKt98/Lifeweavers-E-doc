@@ -11,7 +11,7 @@ import ToDoList from '@/components/todo/ToDoList'; // Import ToDoList
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, User as UserIcon, Users, Trash2, ListChecks } from 'lucide-react';
-import { format, formatDistanceToNow, addDays, startOfDay } from 'date-fns';
+import { format, formatDistanceToNow, addDays, startOfDay, isPast } from 'date-fns'; // Added isPast
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -448,3 +448,4 @@ export default function ClientDetailPage() {
     </div>
   );
 }
+
