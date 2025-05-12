@@ -1,15 +1,17 @@
+
 // src/app/(app)/clients/[clientId]/page.tsx
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import type { Client, SessionNote, User, Attachment } from '@/lib/types';
+import type { Client, SessionNote, User, Attachment, ToDoTask } from '@/lib/types';
 import { useAuth } from '@/contexts/AuthContext';
 import SessionFeed from '@/components/sessions/SessionFeed';
+import ToDoList from '@/components/todo/ToDoList'; // Import ToDoList
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle, User as UserIcon, Users, Trash2 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { AlertTriangle, User as UserIcon, Users, Trash2, ListChecks } from 'lucide-react';
+import { format, formatDistanceToNow, addDays, startOfDay } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -22,8 +24,8 @@ const MOCK_CLIENTS_DB: Record<string, Client> = {
   'client-2': { id: 'client-2', name: 'Jane Smith', dateAdded: new Date(2023, 2, 10).toISOString(), teamMemberIds: ['user_clinician2', 'user_clinician'] },
   'client-3': { id: 'client-3', name: 'Alice Johnson', dateAdded: new Date(2022, 11, 1).toISOString(), teamMemberIds: [] },
   'client-4': { id: 'client-4', name: 'Bob Williams', dateAdded: new Date(2023, 5, 20).toISOString(), teamMemberIds: ['user_clinician'] },
-  'client-5': { id: 'client-5', name: 'Charlie Brown', dateAdded: new Date(2023, 8, 5).toISOString(), teamMemberIds: ['user_new1'] },
-  'client-6': { id: 'client-6', name: 'Diana Prince', dateAdded: new Date(2023, 1, 22).toISOString(), teamMemberIds: ['user_clinician', 'user_clinician2', 'user_new1'] },
+  'client-5': { id: 'client-5', name: 'Charlie Brown', dateAdded: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), teamMemberIds: ['user_new1'] }, // Added recently for todo testing
+  'client-6': { id: 'client-6', name: 'Diana Prince', dateAdded: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString(), teamMemberIds: ['user_clinician', 'user_clinician2', 'user_new1'] }, // Added >30 days ago for todo testing
 };
 
 const MOCK_SESSIONS_DB: Record<string, SessionNote[]> = {
@@ -44,12 +46,33 @@ const MOCK_SESSIONS_DB: Record<string, SessionNote[]> = {
   ],
 };
 
-// Mock list of all users who are clinicians for selection
 const MOCK_ALL_CLINICIANS_FOR_SELECTION: User[] = [
   { id: 'user_clinician', email: 'clinician@lifeweaver.com', name: 'Casey Clinician', role: 'Clinician', vocation: 'Physiotherapist' },
   { id: 'user_clinician2', email: 'clinician2@lifeweaver.com', name: 'Jamie Therapist', role: 'Clinician', vocation: 'Occupational Therapist' },
   { id: 'user_new1', email: 'new.user1@example.com', name: 'Taylor New', role: 'Clinician', vocation: 'Speech Therapist' },
 ];
+
+// Mock DB for ToDo Tasks
+let MOCK_TODO_TASKS_DB: Record<string, ToDoTask[]> = {
+    'client-1': [
+        { id: 'todo-1-1', clientId: 'client-1', description: 'Follow up on home exercise plan adherence.', isDone: false, createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), addedByUserId: 'user_clinician', addedByUserName: 'Casey Clinician', dueDate: format(addDays(new Date(), 5), 'yyyy-MM-dd') },
+        { id: 'todo-1-2', clientId: 'client-1', description: 'Schedule next appointment.', isDone: true, createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), addedByUserId: 'user_admin', addedByUserName: 'Alex Admin', completedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), completedByUserId: 'user_admin', completedByUserName: 'Alex Admin' },
+    ],
+    'client-6': [ // Client added >30 days ago
+        { 
+            id: 'todo-6-sys-1', clientId: 'client-6', 
+            description: 'Conduct 1st Progress Review (30 days post-intake)', 
+            isDone: true, 
+            createdAt: MOCK_CLIENTS_DB['client-6'].dateAdded, 
+            addedByUserId: 'system', addedByUserName: 'System', 
+            dueDate: format(addDays(new Date(MOCK_CLIENTS_DB['client-6'].dateAdded), 30), 'yyyy-MM-dd'),
+            isSystemGenerated: true,
+            completedAt: format(addDays(new Date(MOCK_CLIENTS_DB['client-6'].dateAdded), 28), 'yyyy-MM-dd'), // Completed early
+            completedByUserId: 'user_clinician',
+            completedByUserName: 'Casey Clinician',
+        }
+    ]
+};
 
 
 export default function ClientDetailPage() {
@@ -60,8 +83,79 @@ export default function ClientDetailPage() {
 
   const [client, setClient] = useState<Client | null>(null);
   const [sessions, setSessions] = useState<SessionNote[]>([]);
+  const [todoTasks, setTodoTasks] = useState<ToDoTask[]>([]); // State for ToDo tasks
   const [dataLoading, setDataLoading] = useState(true);
   const [selectedClinicianToAdd, setSelectedClinicianToAdd] = useState<string>('');
+  
+  const canManageTeam = user && (user.role === 'Admin' || user.role === 'Super Admin');
+  const isTeamMember = user && client && user.role === 'Clinician' && client.teamMemberIds?.includes(user.id);
+  const canModifyNotesAndTasks = canManageTeam || isTeamMember; // Permission for notes and tasks
+  const canDeleteSystemGeneratedTasks = user?.role === 'Super Admin';
+
+
+  const synchronizePresetTasks = useCallback((currentClient: Client, existingTasks: ToDoTask[]): ToDoTask[] => {
+    if (!user) return existingTasks;
+    let updatedTasks = [...existingTasks];
+    let changesMade = false;
+
+    const clientDateAdded = new Date(currentClient.dateAdded);
+
+    // 1. 30-Day Progress Review
+    const thirtyDayReviewDesc = "Conduct 1st Progress Review (30 days post-intake)";
+    let thirtyDayReview = updatedTasks.find(task => task.description === thirtyDayReviewDesc && task.isSystemGenerated);
+    if (!thirtyDayReview) {
+      const dueDate30 = format(addDays(startOfDay(clientDateAdded), 30), 'yyyy-MM-dd');
+      thirtyDayReview = {
+        id: `sys-${currentClient.id}-30day-${Date.now()}`,
+        clientId: currentClient.id,
+        description: thirtyDayReviewDesc,
+        isDone: false,
+        createdAt: new Date().toISOString(),
+        addedByUserId: 'system',
+        addedByUserName: 'System',
+        dueDate: dueDate30,
+        isSystemGenerated: true,
+      };
+      updatedTasks.push(thirtyDayReview);
+      changesMade = true;
+      toast({ title: "System Task Added", description: `"${thirtyDayReviewDesc}" scheduled.`, variant: "default" });
+    }
+
+    // 2. 60-Day Follow-up Progress Review (if 30-day is done or significantly past due)
+    if (thirtyDayReview && (thirtyDayReview.isDone || (thirtyDayReview.dueDate && isPast(addDays(new Date(thirtyDayReview.dueDate), 1))))) { // if done or more than 1 day past due
+        const sixtyDayFollowUpDesc = "Conduct Follow-up Progress Review (60 days after 1st)";
+        const sixtyDayFollowUpExpectedDueDate = thirtyDayReview.dueDate ? addDays(startOfDay(new Date(thirtyDayReview.dueDate)), 60) : addDays(startOfDay(clientDateAdded), 30 + 60);
+        
+        const existingSixtyDayReview = updatedTasks.find(task => 
+            task.description === sixtyDayFollowUpDesc && 
+            task.isSystemGenerated &&
+            task.dueDate === format(sixtyDayFollowUpExpectedDueDate, 'yyyy-MM-dd')
+        );
+
+        if (!existingSixtyDayReview) {
+            const newSixtyDayReview: ToDoTask = {
+                id: `sys-${currentClient.id}-60day-${Date.now()}`,
+                clientId: currentClient.id,
+                description: sixtyDayFollowUpDesc,
+                isDone: false,
+                createdAt: new Date().toISOString(),
+                addedByUserId: 'system',
+                addedByUserName: 'System',
+                dueDate: format(sixtyDayFollowUpExpectedDueDate, 'yyyy-MM-dd'),
+                isSystemGenerated: true,
+            };
+            updatedTasks.push(newSixtyDayReview);
+            changesMade = true;
+            toast({ title: "System Task Added", description: `"${sixtyDayFollowUpDesc}" scheduled.`, variant: "default" });
+        }
+    }
+    
+    if (changesMade) {
+        MOCK_TODO_TASKS_DB[currentClient.id] = [...updatedTasks];
+    }
+    return updatedTasks;
+  }, [user, toast]);
+
 
   useEffect(() => {
     if (clientId && user) {
@@ -69,21 +163,27 @@ export default function ClientDetailPage() {
       // Simulate fetching data
       setTimeout(() => {
         const foundClient = MOCK_CLIENTS_DB[clientId];
-        const clientSessions = (MOCK_SESSIONS_DB[clientId] || []).map(s => ({...s, attachments: s.attachments || []})); // Ensure attachments array exists
+        const clientSessions = (MOCK_SESSIONS_DB[clientId] || []).map(s => ({...s, attachments: s.attachments || []}));
+        let clientTasks = MOCK_TODO_TASKS_DB[clientId] || [];
+        
+        if (foundClient) {
+            clientTasks = synchronizePresetTasks(foundClient, clientTasks);
+        }
         
         setClient(foundClient || null);
         setSessions(clientSessions.sort((a, b) => new Date(b.dateOfSession).getTime() - new Date(a.dateOfSession).getTime()));
+        setTodoTasks(clientTasks);
         setDataLoading(false);
       }, 500);
     }
-  }, [clientId, user]);
+  }, [clientId, user, synchronizePresetTasks]);
   
   const handleAddSession = (newSessionData: Omit<SessionNote, 'id' | 'sessionNumber' | 'createdAt' | 'updatedAt'>) => {
     const newSession: SessionNote = {
         ...newSessionData,
         id: `sess-${clientId}-${Date.now()}`,
         sessionNumber: (MOCK_SESSIONS_DB[clientId]?.length || 0) + 1,
-        attachments: newSessionData.attachments || [], // Ensure attachments is an array
+        attachments: newSessionData.attachments || [], 
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     };
@@ -95,9 +195,72 @@ export default function ClientDetailPage() {
     } else {
       MOCK_SESSIONS_DB[clientId] = [newSession];
     }
-     // Sort the DB entry as well
     MOCK_SESSIONS_DB[clientId].sort((a, b) => new Date(b.dateOfSession).getTime() - new Date(a.dateOfSession).getTime());
   };
+
+  const handleAddToDoTask = (description: string, dueDate?: string) => {
+    if (!user || !client) return;
+    const newTask: ToDoTask = {
+      id: `todo-${client.id}-${Date.now()}`,
+      clientId: client.id,
+      description,
+      isDone: false,
+      createdAt: new Date().toISOString(),
+      addedByUserId: user.id,
+      addedByUserName: user.name,
+      dueDate: dueDate ? format(startOfDay(new Date(dueDate)), 'yyyy-MM-dd') : undefined,
+      isSystemGenerated: false,
+    };
+    const updatedTasks = [...todoTasks, newTask];
+    setTodoTasks(updatedTasks);
+    MOCK_TODO_TASKS_DB[client.id] = updatedTasks;
+    toast({ title: "Task Added", description: `"${description}" has been added to the to-do list.` });
+  };
+
+  const handleToggleToDoTask = (taskId: string) => {
+    if (!user || !client) return;
+    const updatedTasks = todoTasks.map(task => {
+      if (task.id === taskId) {
+        const isNowDone = !task.isDone;
+        return {
+          ...task,
+          isDone: isNowDone,
+          completedAt: isNowDone ? new Date().toISOString() : undefined,
+          completedByUserId: isNowDone ? user.id : undefined,
+          completedByUserName: isNowDone ? user.name : undefined,
+        };
+      }
+      return task;
+    });
+    setTodoTasks(updatedTasks);
+    MOCK_TODO_TASKS_DB[client.id] = updatedTasks;
+    const targetTask = updatedTasks.find(t => t.id === taskId);
+    toast({ title: `Task ${targetTask?.isDone ? 'Completed' : 'Marked Pending'}`, description: `"${targetTask?.description}" status updated.` });
+
+    // If a system-generated task (like 30-day review) is completed, try to sync/generate the next one
+    if (targetTask?.isSystemGenerated && targetTask.isDone && client) {
+        const newTaskList = synchronizePresetTasks(client, updatedTasks);
+        setTodoTasks(newTaskList); // This might cause a double toast if synchronizePresetTasks also toasts
+    }
+
+  };
+  
+  const handleRemoveToDoTask = (taskId: string) => {
+    if (!client) return;
+    const taskToRemove = todoTasks.find(task => task.id === taskId);
+    if (!taskToRemove) return;
+
+    if (taskToRemove.isSystemGenerated && !canDeleteSystemGeneratedTasks) {
+        toast({ title: "Deletion Denied", description: "System-generated tasks cannot be deleted by your role.", variant: "destructive"});
+        return;
+    }
+
+    const updatedTasks = todoTasks.filter(task => task.id !== taskId);
+    setTodoTasks(updatedTasks);
+    MOCK_TODO_TASKS_DB[client.id] = updatedTasks;
+    toast({ title: "Task Removed", description: `"${taskToRemove.description}" has been removed.` });
+  };
+
 
   const getInitials = (name: string) => {
     const names = name.split(' ');
@@ -116,7 +279,7 @@ export default function ClientDetailPage() {
       teamMemberIds: [...(client.teamMemberIds || []), selectedClinicianToAdd],
     };
     setClient(updatedClient);
-    MOCK_CLIENTS_DB[client.id] = updatedClient; // Update mock DB
+    MOCK_CLIENTS_DB[client.id] = updatedClient; 
     toast({ title: "Clinician Added", description: `${MOCK_ALL_CLINICIANS_FOR_SELECTION.find(c=>c.id === selectedClinicianToAdd)?.name} has been added to Team ${client.name}.`, variant: "default" });
     setSelectedClinicianToAdd('');
   };
@@ -129,7 +292,7 @@ export default function ClientDetailPage() {
       teamMemberIds: (client.teamMemberIds || []).filter(id => id !== clinicianIdToRemove),
     };
     setClient(updatedClient);
-    MOCK_CLIENTS_DB[client.id] = updatedClient; // Update mock DB
+    MOCK_CLIENTS_DB[client.id] = updatedClient; 
     toast({ title: "Clinician Removed", description: `${clinicianName} has been removed from Team ${client.name}.`, variant: "default" });
   };
   
@@ -159,10 +322,6 @@ export default function ClientDetailPage() {
     );
   }
 
-  const canManageTeam = user && (user.role === 'Admin' || user.role === 'Super Admin');
-  const isTeamMember = user && user.role === 'Clinician' && client.teamMemberIds?.includes(user.id);
-  const canModifyNotes = canManageTeam || isTeamMember;
-
   const availableCliniciansToAdd = MOCK_ALL_CLINICIANS_FOR_SELECTION.filter(
     c => !client.teamMemberIds?.includes(c.id)
   );
@@ -178,7 +337,8 @@ export default function ClientDetailPage() {
               </CardTitle>
               <CardDescription className="text-md text-muted-foreground mt-1">
                 Client since {formatDistanceToNow(new Date(client.dateAdded), { addSuffix: true })}.
-                Total Sessions: {sessions.length}
+                Total Sessions: {sessions.length}.
+                Pending Tasks: {todoTasks.filter(t => !t.isDone).length}.
               </CardDescription>
             </div>
           </div>
@@ -251,15 +411,29 @@ export default function ClientDetailPage() {
           )}
         </CardContent>
       </Card>
+      
+      {user && canModifyNotesAndTasks && (
+         <ToDoList
+            clientId={client.id}
+            tasks={todoTasks}
+            currentUser={user}
+            onAddTask={handleAddToDoTask}
+            onToggleTask={handleToggleToDoTask}
+            onRemoveTask={handleRemoveToDoTask}
+            canModify={canModifyNotesAndTasks}
+            canDeleteSystemGenerated={canDeleteSystemGeneratedTasks}
+          />
+      )}
 
-      {canModifyNotes ? (
+
+      {canModifyNotesAndTasks ? (
         <SessionFeed 
           clientId={client.id} 
           clientName={client.name} 
           sessions={sessions} 
           currentUser={user!}
           onSessionAdded={handleAddSession}
-          canModifyNotes={canModifyNotes}
+          canModifyNotes={canModifyNotesAndTasks}
         />
       ) : (
         <Card>
@@ -267,7 +441,7 @@ export default function ClientDetailPage() {
             <CardTitle className="text-destructive flex items-center gap-2"><AlertTriangle /> Access Restricted</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-destructive-foreground">You are not a member of Team {client.name} and do not have permission to view or edit session notes for this client. Please contact an administrator if you believe this is an error.</p>
+            <p className="text-destructive-foreground">You are not a member of Team {client.name} and do not have permission to view or edit session notes or tasks for this client. Please contact an administrator if you believe this is an error.</p>
           </CardContent>
         </Card>
       )}

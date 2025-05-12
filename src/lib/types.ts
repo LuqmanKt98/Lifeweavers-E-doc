@@ -92,3 +92,20 @@ export interface SpecialNotification {
   link?: string;
   // isActive is managed by the component displaying the banner list
 }
+
+// Things To Do Feature
+export interface ToDoTask {
+  id: string;
+  clientId: string;
+  description: string;
+  isDone: boolean;
+  createdAt: string; // ISO string
+  addedByUserId: string;
+  addedByUserName: string;
+  completedAt?: string; // ISO string
+  completedByUserId?: string;
+  completedByUserName?: string;
+  dueDate?: string; // ISO string (just date part: YYYY-MM-DD)
+  isSystemGenerated?: boolean;
+  notes?: string; // Optional field for additional notes on the task
+}
