@@ -2,14 +2,19 @@
 "use client";
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShieldAlert, FolderSync, Loader2, CheckCircle, XCircle, Info, Edit2 } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ShieldAlert, FolderSync, Loader2, CheckCircle, XCircle, Info, Edit2, Users, ArrowRight, Search, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { MOCK_CLIENTS_DB, MOCK_SESSIONS_DB, MOCK_ALL_USERS_DATABASE } from '@/lib/mockDatabase';
 import type { Client, SessionNote, User } from '@/lib/types';
+import { Input } from '@/components/ui/input';
+
 
 // Mock representation of Google Drive structure
 interface MockDriveFile {
@@ -102,6 +107,12 @@ export default function CasesManagementPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncStatus, setLastSyncStatus] = useState<{ success: boolean; timestamp: string | null; details?: string }>({ success: false, timestamp: null });
   const [syncedItemsLog, setSyncedItemsLog] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const allClientsArray = Object.values(MOCK_CLIENTS_DB);
+  const filteredClients = allClientsArray.filter(client => 
+    client.name.toLowerCase().includes(searchTerm.toLowerCase())
+  ).sort((a,b) => new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime());
 
   if (!user || (user.role !== 'Super Admin' && user.role !== 'Admin')) {
     return (
@@ -119,11 +130,17 @@ export default function CasesManagementPage() {
       </Card>
     );
   }
+  
+  const getInitials = (name: string) => {
+    const names = name.split(' ');
+    if (names.length === 1) return names[0][0].toUpperCase();
+    return names[0][0].toUpperCase() + names[names.length - 1][0].toUpperCase();
+  };
 
   const parseSessionString = (sessionStr: string, defaultClinicianName: string, defaultDate: string): Partial<SessionNote> => {
     const sessionData: Partial<SessionNote> = {};
     const parts = sessionStr.split('|').map(p => p.trim());
-    let noteContent = sessionStr; // Default to full string if parsing fails badly
+    let noteContent = sessionStr; 
 
     parts.forEach(part => {
         if (part.toLowerCase().startsWith('session:')) {
@@ -140,31 +157,25 @@ export default function CasesManagementPage() {
             }
             noteContent = noteContent.replace(part, '').trim().replace(/^\|/, '').trim();
         }
-        // Duration and Location are optional and not strictly parsed into SessionNote here
     });
     
-    // Clean up leading/trailing metadata that might be left if not perfectly formatted
     const contentBreak = noteContent.indexOf('\n');
-    if (contentBreak !== -1 && contentBreak < 100) { // Heuristic: metadata is usually short
+    if (contentBreak !== -1 && contentBreak < 100) { 
         const firstLine = noteContent.substring(0, contentBreak).toLowerCase();
         if (!firstLine.includes('session:') && !firstLine.includes('clinician:') && !firstLine.includes('date:')) {
-            // It's likely the actual notes if it doesn't contain keywords.
             sessionData.content = `<p>${noteContent.substring(contentBreak + 1).trim().replace(/\n/g, '</p><p>')}</p>`;
         } else {
-             // If the first line still looks like metadata, it means it wasn't fully stripped by '|' split.
-             // Try to take everything after the first newline as content.
              sessionData.content = `<p>${noteContent.substring(contentBreak + 1).trim().replace(/\n/g, '</p><p>')}</p>`;
         }
     } else {
         sessionData.content = `<p>${noteContent.trim().replace(/\n/g, '</p><p>')}</p>`;
     }
 
-
     if (!sessionData.attendingClinicianName) sessionData.attendingClinicianName = defaultClinicianName;
     if (!sessionData.dateOfSession) sessionData.dateOfSession = new Date(defaultDate).toISOString();
     
     const clinicianUser = MOCK_ALL_USERS_DATABASE.find(u => u.name === sessionData.attendingClinicianName);
-    sessionData.attendingClinicianId = clinicianUser?.id || MOCK_ALL_USERS_DATABASE[0]?.id || 'unknown_clinician'; // Fallback
+    sessionData.attendingClinicianId = clinicianUser?.id || MOCK_ALL_USERS_DATABASE[0]?.id || 'unknown_clinician';
     sessionData.attendingClinicianVocation = clinicianUser?.vocation;
 
     return sessionData;
@@ -183,13 +194,13 @@ export default function CasesManagementPage() {
     let newSessionsCount = 0;
     const currentSyncedItems: string[] = [];
 
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate initial connection
+    await new Promise(resolve => setTimeout(resolve, 1500)); 
 
     try {
       for (const yearFolder of MOCK_GOOGLE_DRIVE_ROOT) {
         currentSyncedItems.push(`Processing year: ${yearFolder.name}`);
         setSyncedItemsLog([...currentSyncedItems]);
-        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate reading year folder
+        await new Promise(resolve => setTimeout(resolve, 500)); 
 
         if (!yearFolder.children) continue;
 
@@ -206,8 +217,8 @@ export default function CasesManagementPage() {
             clientObject = {
               id: clientKey,
               name: clientName,
-              dateAdded: clientFolder.lastModifiedTime || new Date().toISOString(), // Or parse from session if better
-              teamMemberIds: [], // Default, can be updated by admins later
+              dateAdded: clientFolder.lastModifiedTime || new Date().toISOString(), 
+              teamMemberIds: [], 
             };
             MOCK_CLIENTS_DB[clientKey] = clientObject;
             newClientsCount++;
@@ -218,12 +229,11 @@ export default function CasesManagementPage() {
           }
           setSyncedItemsLog([...currentSyncedItems]);
 
-
           const notesFile = clientFolder.children?.find(file => file.name.toLowerCase().includes('internal doc') && file.name.toLowerCase().endsWith('.gdoc'));
           if (notesFile && notesFile.content) {
             currentSyncedItems.push(`    Processing notes file: ${notesFile.name}`);
             setSyncedItemsLog([...currentSyncedItems]);
-            await new Promise(resolve => setTimeout(resolve, 500)); // Simulate reading doc
+            await new Promise(resolve => setTimeout(resolve, 500)); 
 
             if (!MOCK_SESSIONS_DB[clientKey]) {
               MOCK_SESSIONS_DB[clientKey] = [];
@@ -233,7 +243,6 @@ export default function CasesManagementPage() {
             sessionStrings.forEach((sessionStr, index) => {
               const parsedSession = parseSessionString(sessionStr, MOCK_ALL_USERS_DATABASE[0]?.name || 'Unknown Clinician', notesFile.lastModifiedTime || new Date().toISOString());
               
-              // Simple check to avoid duplicate sessions based on content and date (mock approach)
               const existingSession = MOCK_SESSIONS_DB[clientKey].find(
                 s => s.content === parsedSession.content && 
                      new Date(s.dateOfSession).toDateString() === new Date(parsedSession.dateOfSession || Date.now()).toDateString() &&
@@ -250,7 +259,7 @@ export default function CasesManagementPage() {
                   attendingClinicianName: parsedSession.attendingClinicianName!,
                   attendingClinicianVocation: parsedSession.attendingClinicianVocation,
                   content: parsedSession.content,
-                  attachments: [], // Attachment sync from GDrive would be more complex
+                  attachments: [], 
                   createdAt: notesFile.lastModifiedTime || new Date().toISOString(),
                   updatedAt: notesFile.lastModifiedTime || new Date().toISOString(),
                 };
@@ -295,13 +304,83 @@ export default function CasesManagementPage() {
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
             <FolderSync className="h-7 w-7" />
-            Cases Management & Drive Sync
+            Cases Management
           </CardTitle>
           <CardDescription>
-            Manage client cases and synchronize data from mock Google Drive.
-            Client data is stored at <a href="https://drive.google.com/drive/folders/1IxuDBR22XIlHw96kuaePqfyZPPJIQR8l?usp=drive_link" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">this mock Drive link</a>.
+            Manage client cases, synchronize data, and view all client records.
           </CardDescription>
         </CardHeader>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <CardTitle className="text-xl flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" /> All Client Cases
+            </CardTitle>
+            <CardDescription>
+                View and manage all client records in the system.
+            </CardDescription>
+          </div>
+           <Button variant="default" disabled>
+            <PlusCircle className="mr-2 h-4 w-4" /> Add New Client (Manual)
+          </Button>
+        </CardHeader>
+        <CardContent>
+            <div className="mb-4">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input 
+                    type="search" 
+                    placeholder="Search clients by name..." 
+                    className="pl-9 bg-background"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+            </div>
+          {filteredClients.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Client Name</TableHead>
+                  <TableHead>Date Added</TableHead>
+                  <TableHead>Team Members</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredClients.map((client) => (
+                  <TableRow key={client.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9">
+                          <AvatarImage src={`https://picsum.photos/seed/${client.id}/36/36`} alt={client.name} data-ai-hint="person avatar"/>
+                          <AvatarFallback>{getInitials(client.name)}</AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium">{client.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{format(new Date(client.dateAdded), 'PPP')} ({formatDistanceToNow(new Date(client.dateAdded), { addSuffix: true })})</TableCell>
+                    <TableCell>{client.teamMemberIds?.length || 0} member(s)</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/clients/${client.id}`}>View Details <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <p className="text-muted-foreground text-center py-4">
+                {searchTerm ? "No clients match your search." : "No clients in the system yet. Try syncing from Drive."}
+            </p>
+          )}
+        </CardContent>
+         <CardFooter className="border-t pt-4">
+             <p className="text-sm text-muted-foreground">Total clients: {allClientsArray.length}</p>
+         </CardFooter>
       </Card>
 
       <Card>
@@ -309,7 +388,7 @@ export default function CasesManagementPage() {
           <CardTitle className="text-xl">Google Drive Synchronization (Mock)</CardTitle>
           <CardDescription>
             This simulates updating client information and session notes from a mock Google Drive structure.
-            Data versioning from Drive is not fully simulated in this mock.
+            Client data is stored at <a href="https://drive.google.com/drive/folders/1IxuDBR22XIlHw96kuaePqfyZPPJIQR8l?usp=drive_link" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">this mock Drive link</a>.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -365,7 +444,7 @@ export default function CasesManagementPage() {
         </CardHeader>
         <CardContent>
             <p className="text-muted-foreground">
-                This section is a placeholder for more advanced case management tools, such as manually adding clients not found in Drive, archiving old cases, or exporting data for compliance.
+                This section is a placeholder for more advanced case management tools, such as manually adding clients not found in Drive, archiving old cases, or exporting data for compliance. The "Add New Client" button above would activate this section.
             </p>
         </CardContent>
       </Card>

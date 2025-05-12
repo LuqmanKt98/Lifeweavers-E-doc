@@ -6,10 +6,10 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppSidebar from '@/components/layout/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
-import type { Client, SpecialNotification } from '@/lib/types';
+import type { SpecialNotification } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import SpecialNotificationBanner from '@/components/layout/SpecialNotificationBanner';
-import { MOCK_CLIENTS_DB } from '@/lib/mockDatabase'; // Import centralized mock clients
+import { MOCK_CLIENTS_DB } from '@/lib/mockDatabase'; 
 
 // Mock data for special notifications
 const MOCK_SPECIAL_NOTIFICATIONS_DATA: SpecialNotification[] = [
@@ -45,7 +45,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [clientsForSidebar, setClientsForSidebar] = useState<Client[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeSpecialNotifications, setActiveSpecialNotifications] = useState<SpecialNotification[]>([]);
 
@@ -53,8 +52,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (!loading && !user) {
       router.replace('/login');
     }
-    // Fetch clients from the centralized mock DB
-    setClientsForSidebar(Object.values(MOCK_CLIENTS_DB));
 
     const initiallyActive = MOCK_SPECIAL_NOTIFICATIONS_DATA.filter(notification => {
       if (typeof window !== 'undefined') {
@@ -67,24 +64,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   }, [user, loading, router]);
   
-  // Effect to update sidebar clients if MOCK_CLIENTS_DB changes (e.g., after Drive Sync)
-  useEffect(() => {
-    const interval = setInterval(() => {
-        // This is a polling mechanism for mock purposes. In a real app, this would be event-driven or use a state management library.
-        const currentClients = Object.values(MOCK_CLIENTS_DB);
-        if (JSON.stringify(currentClients) !== JSON.stringify(clientsForSidebar)) {
-            setClientsForSidebar(currentClients);
-        }
-    }, 2000); // Check every 2 seconds for changes
-    return () => clearInterval(interval);
-  }, [clientsForSidebar]);
-
 
   const getPageTitle = (currentPathname: string): string => {
     if (currentPathname === '/dashboard') return 'Dashboard';
     if (currentPathname.startsWith('/clients/')) {
       const clientId = currentPathname.split('/')[2];
-      const client = MOCK_CLIENTS_DB[clientId];
+      const client = MOCK_CLIENTS_DB[clientId]; // MOCK_CLIENTS_DB is directly accessible
       return client ? `${client.name} - Notes` : 'Client Session Notes'; 
     }
     if (currentPathname === '/admin/users') return 'User Management';
@@ -115,7 +100,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen bg-secondary/50">
-      <AppSidebar clients={clientsForSidebar} isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
+      <AppSidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
       <div className={`flex flex-1 flex-col transition-all duration-300 ease-in-out ${sidebarOpen ? 'md:ml-64' : 'md:ml-16'}`}>
         <AppHeader user={user} toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} pageTitle={pageTitle} />
         <main className="flex-1 overflow-y-auto">

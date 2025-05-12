@@ -3,21 +3,18 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import type { Client } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { Home, Users, Settings, ChevronLeft, ChevronRight, PlusCircle, Bell, MessageSquare, LifeBuoy, FolderSync } from 'lucide-react';
+import { Home, Users, Settings, ChevronLeft, ChevronRight, Bell, MessageSquare, LifeBuoy, FolderSync } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-// import Logo from '@/components/Logo'; // Logo component removed
 
 interface AppSidebarProps {
-  clients: Client[];
   isOpen: boolean;
   toggleSidebar: () => void;
 }
 
-export default function AppSidebar({ clients, isOpen, toggleSidebar }: AppSidebarProps) {
+export default function AppSidebar({ isOpen, toggleSidebar }: AppSidebarProps) {
   const pathname = usePathname();
   const { user } = useAuth();
 
@@ -25,15 +22,12 @@ export default function AppSidebar({ clients, isOpen, toggleSidebar }: AppSideba
     { href: '/dashboard', label: 'Dashboard', icon: Home },
     { href: '/notifications', label: 'Notifications', icon: Bell },
     { href: '/messages', label: 'Messages', icon: MessageSquare },
-    // Add more static nav items if needed
   ];
 
   if (user?.role === 'Super Admin' || user?.role === 'Admin') {
-    // Ensure User Management is not duplicated if already there
     if (!navItems.find(item => item.href === '/admin/users')) {
       navItems.push({ href: '/admin/users', label: 'User Management', icon: Settings });
     }
-    // Add Cases Management link
     if (!navItems.find(item => item.href === '/admin/cases')) {
       navItems.push({ href: '/admin/cases', label: 'Cases Management', icon: FolderSync });
     }
@@ -63,14 +57,13 @@ export default function AppSidebar({ clients, isOpen, toggleSidebar }: AppSideba
         )}
       >
         <div className={cn("flex items-center border-b border-sidebar-border px-4", isOpen ? "h-16 justify-between" : "h-16 justify-center")}>
-          {/* Logo removed from here */}
           {isOpen ? (
              <Link href="/dashboard" className="font-bold text-lg text-sidebar-primary hover:text-sidebar-primary/80 transition-colors">
                 LWV CLINIC E-DOC
              </Link>
           ) : (
             <Link href="/dashboard" className="text-sidebar-primary hover:text-sidebar-primary/80 transition-colors">
-              <LifeBuoy className="h-7 w-7"/> {/* Placeholder icon if sidebar is collapsed and no logo */}
+              <LifeBuoy className="h-7 w-7"/> 
             </Link>
           )}
           {isOpen && (
@@ -97,36 +90,7 @@ export default function AppSidebar({ clients, isOpen, toggleSidebar }: AppSideba
                 {isOpen && <span className={labelClasses}>{item.label}</span>}
               </Link>
             ))}
-
-            <div className={cn("px-3 pt-4 pb-2", !isOpen && "px-0 text-center")}>
-              <h3 className={cn("text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/70", !isOpen && "hidden")}>
-                Clients
-              </h3>
-               {!isOpen && <Users className="mx-auto h-5 w-5 text-sidebar-foreground/70" />}
-            </div>
-            
-            {user && (user.role === 'Admin' || user.role === 'Super Admin') && isOpen && (
-                <Button variant="outline" className="w-full justify-start mb-2 bg-primary/5 hover:bg-primary/10 border-primary/20 text-primary">
-                  <PlusCircle className={cn(iconClasses, !isOpen && "mr-0")} />
-                  {isOpen && <span className={labelClasses}>Add New Client</span>}
-                </Button>
-              )}
-
-            {clients.map((client) => (
-              <Link
-                key={client.id}
-                href={`/clients/${client.id}`}
-                className={cn(
-                  commonLinkClasses,
-                  pathname === `/clients/${client.id}` ? activeLinkClasses : inactiveLinkClasses,
-                  !isOpen && "justify-center"
-                )}
-                title={isOpen ? "" : client.name}
-              >
-                <Users className={cn(iconClasses, !isOpen && "mr-0")} />
-                {isOpen && <span className={labelClasses}>{client.name}</span>}
-              </Link>
-            ))}
+            {/* Client list removed from here */}
           </nav>
         </ScrollArea>
         
