@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import type { Client, SessionNote, User } from '@/lib/types';
+import type { Client, SessionNote, User, Attachment } from '@/lib/types';
 import { useAuth } from '@/contexts/AuthContext';
 import SessionFeed from '@/components/sessions/SessionFeed';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -28,14 +28,19 @@ const MOCK_CLIENTS_DB: Record<string, Client> = {
 
 const MOCK_SESSIONS_DB: Record<string, SessionNote[]> = {
   'client-1': [
-    { id: 'sess-1-1', clientId: 'client-1', sessionNumber: 1, dateOfSession: new Date(2023, 7, 1).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: 'Physiotherapist', content: 'Initial assessment. Patient presents with lower back pain.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'sess-1-2', clientId: 'client-1', sessionNumber: 2, dateOfSession: new Date(2023, 7, 8).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: 'Physiotherapist', content: 'Follow-up session. Introduced light exercises. Pain reported as 5/10.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'sess-1-3', clientId: 'client-1', sessionNumber: 3, dateOfSession: new Date(2023,8,10).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: 'Physiotherapist', content: 'Patient reported improvement in mobility. Pain 3/10.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'sess-1-4', clientId: 'client-1', sessionNumber: 4, dateOfSession: new Date(2023,8,17).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: 'Physiotherapist', content: 'Continued with range of motion exercises. Patient progressing well.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    { id: 'sess-1-1', clientId: 'client-1', sessionNumber: 1, dateOfSession: new Date(2023, 7, 1).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: 'Physiotherapist', content: 'Initial assessment. Patient presents with lower back pain.', attachments: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    { id: 'sess-1-2', clientId: 'client-1', sessionNumber: 2, dateOfSession: new Date(2023, 7, 8).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: 'Physiotherapist', content: 'Follow-up session. Introduced light exercises. Pain reported as 5/10.', attachments: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    { id: 'sess-1-3', clientId: 'client-1', sessionNumber: 3, dateOfSession: new Date(2023,8,10).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: 'Physiotherapist', content: 'Patient reported improvement in mobility. Pain 3/10.', attachments: [
+        { id: 'att-1-3-1', name: 'Lumbar_MRI_Scan.pdf', mimeType: 'application/pdf', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', fileType: 'pdf' }
+    ], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    { id: 'sess-1-4', clientId: 'client-1', sessionNumber: 4, dateOfSession: new Date(2023,8,17).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: 'Physiotherapist', content: 'Continued with range of motion exercises. Patient progressing well.', attachments: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
   ],
   'client-2': [
-    { id: 'sess-2-1', clientId: 'client-2', sessionNumber: 1, dateOfSession: new Date(2023, 7, 5).toISOString(), attendingClinicianId: 'user_clinician2', attendingClinicianName: 'Jamie Therapist', attendingClinicianVocation: 'Occupational Therapist', content: 'First session. Discussed goals and challenges.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'sess-2-2', clientId: 'client-2', sessionNumber: 2, dateOfSession: new Date(2023,8,11).toISOString(), attendingClinicianId: 'user_clinician2', attendingClinicianName: 'Jamie Therapist', attendingClinicianVocation: 'Occupational Therapist', content: 'Discussed coping strategies for workplace stress. Introduced mindfulness techniques.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    { id: 'sess-2-1', clientId: 'client-2', sessionNumber: 1, dateOfSession: new Date(2023, 7, 5).toISOString(), attendingClinicianId: 'user_clinician2', attendingClinicianName: 'Jamie Therapist', attendingClinicianVocation: 'Occupational Therapist', content: 'First session. Discussed goals and challenges.', attachments: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    { id: 'sess-2-2', clientId: 'client-2', sessionNumber: 2, dateOfSession: new Date(2023,8,11).toISOString(), attendingClinicianId: 'user_clinician2', attendingClinicianName: 'Jamie Therapist', attendingClinicianVocation: 'Occupational Therapist', content: 'Discussed coping strategies for workplace stress. Introduced mindfulness techniques.', attachments: [
+        { id: 'att-2-2-1', name: 'Mindfulness_Guide.pdf', mimeType: 'application/pdf', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', fileType: 'pdf'},
+        { id: 'att-2-2-2', name: 'Workplace_Ergonomics.jpg', mimeType: 'image/jpeg', url: 'https://picsum.photos/seed/ergonomics/600/400', previewUrl: 'https://picsum.photos/seed/ergonomics/600/400', fileType: 'image' }
+    ], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
   ],
 };
 
@@ -44,8 +49,6 @@ const MOCK_ALL_CLINICIANS_FOR_SELECTION: User[] = [
   { id: 'user_clinician', email: 'clinician@lifeweaver.com', name: 'Casey Clinician', role: 'Clinician', vocation: 'Physiotherapist' },
   { id: 'user_clinician2', email: 'clinician2@lifeweaver.com', name: 'Jamie Therapist', role: 'Clinician', vocation: 'Occupational Therapist' },
   { id: 'user_new1', email: 'new.user1@example.com', name: 'Taylor New', role: 'Clinician', vocation: 'Speech Therapist' },
-  // This user is an admin, but could also be a clinician if their role was different or dual. For this example, only 'Clinician' role users are addable to teams.
-  // { id: 'user_admin', email: 'admin@lifeweaver.com', name: 'Alex Admin', role: 'Admin', vocation: 'Clinic Manager' },
 ];
 
 
@@ -63,9 +66,11 @@ export default function ClientDetailPage() {
   useEffect(() => {
     if (clientId && user) {
       setDataLoading(true);
+      // Simulate fetching data
       setTimeout(() => {
         const foundClient = MOCK_CLIENTS_DB[clientId];
-        const clientSessions = MOCK_SESSIONS_DB[clientId] || [];
+        const clientSessions = (MOCK_SESSIONS_DB[clientId] || []).map(s => ({...s, attachments: s.attachments || []})); // Ensure attachments array exists
+        
         setClient(foundClient || null);
         setSessions(clientSessions.sort((a, b) => new Date(b.dateOfSession).getTime() - new Date(a.dateOfSession).getTime()));
         setDataLoading(false);
@@ -73,14 +78,25 @@ export default function ClientDetailPage() {
     }
   }, [clientId, user]);
   
-  const handleAddSession = (newSession: SessionNote) => {
+  const handleAddSession = (newSessionData: Omit<SessionNote, 'id' | 'sessionNumber' | 'createdAt' | 'updatedAt'>) => {
+    const newSession: SessionNote = {
+        ...newSessionData,
+        id: `sess-${clientId}-${Date.now()}`,
+        sessionNumber: (MOCK_SESSIONS_DB[clientId]?.length || 0) + 1,
+        attachments: newSessionData.attachments || [], // Ensure attachments is an array
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+    };
+
     setSessions(prevSessions => [newSession, ...prevSessions].sort((a, b) => new Date(b.dateOfSession).getTime() - new Date(a.dateOfSession).getTime()));
-    // Update MOCK_SESSIONS_DB (for mock data persistence across reloads if needed, not fully implemented here)
+    
     if (MOCK_SESSIONS_DB[clientId]) {
       MOCK_SESSIONS_DB[clientId] = [newSession, ...MOCK_SESSIONS_DB[clientId]];
     } else {
       MOCK_SESSIONS_DB[clientId] = [newSession];
     }
+     // Sort the DB entry as well
+    MOCK_SESSIONS_DB[clientId].sort((a, b) => new Date(b.dateOfSession).getTime() - new Date(a.dateOfSession).getTime());
   };
 
   const getInitials = (name: string) => {
@@ -181,7 +197,7 @@ export default function ClientDetailPage() {
           {client.teamMemberIds && client.teamMemberIds.length > 0 ? (
             <ul className="space-y-3">
               {client.teamMemberIds.map(memberId => {
-                const member = MOCK_ALL_CLINICIANS_FOR_SELECTION.find(u => u.id === memberId) || MOCK_CLIENTS_DB[memberId] ; // Fallback for other user types if logic changes
+                const member = MOCK_ALL_CLINICIANS_FOR_SELECTION.find(u => u.id === memberId) || MOCK_CLIENTS_DB[memberId] ; 
                 if (!member) return null;
                 return (
                   <li key={memberId} className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg hover:bg-secondary/60 transition-colors">
@@ -258,4 +274,3 @@ export default function ClientDetailPage() {
     </div>
   );
 }
-

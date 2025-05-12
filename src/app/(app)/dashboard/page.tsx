@@ -19,11 +19,11 @@ const MOCK_CLIENTS: Client[] = [
 ];
 
 const MOCK_SESSIONS: SessionNote[] = [
-  { id: 'sess-1', clientId: 'client-1', sessionNumber: 3, dateOfSession: new Date(2023,8,10).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: "Physiotherapist", content: 'Patient reported improvement in mobility.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: 'sess-2', clientId: 'client-2', sessionNumber: 5, dateOfSession: new Date(2023,8,11).toISOString(), attendingClinicianId: 'user_clinician2', attendingClinicianName: 'Jamie Therapist', attendingClinicianVocation: "Occupational Therapist", content: 'Discussed coping strategies for anxiety.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: 'sess-3', clientId: 'client-1', sessionNumber: 4, dateOfSession: new Date(2023,8,17).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: "Physiotherapist", content: 'Continued with range of motion exercises.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: 'sess-4', clientId: 'client-3', sessionNumber: 1, dateOfSession: new Date(2023,9,5).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: "Physiotherapist", content: 'Initial assessment for Alice.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: 'sess-5', clientId: 'client-5', sessionNumber: 2, dateOfSession: new Date(2023,9,12).toISOString(), attendingClinicianId: 'user_clinician2', attendingClinicianName: 'Jamie Therapist', attendingClinicianVocation: "Occupational Therapist", content: 'Follow up with Charlie Brown.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: 'sess-1', clientId: 'client-1', sessionNumber: 3, dateOfSession: new Date(2023,8,10).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: "Physiotherapist", content: 'Patient reported improvement in mobility.', attachments: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: 'sess-2', clientId: 'client-2', sessionNumber: 5, dateOfSession: new Date(2023,8,11).toISOString(), attendingClinicianId: 'user_clinician2', attendingClinicianName: 'Jamie Therapist', attendingClinicianVocation: "Occupational Therapist", content: 'Discussed coping strategies for anxiety.', attachments: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: 'sess-3', clientId: 'client-1', sessionNumber: 4, dateOfSession: new Date(2023,8,17).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: "Physiotherapist", content: 'Continued with range of motion exercises.', attachments: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: 'sess-4', clientId: 'client-3', sessionNumber: 1, dateOfSession: new Date(2023,9,5).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: "Physiotherapist", content: 'Initial assessment for Alice.', attachments: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: 'sess-5', clientId: 'client-5', sessionNumber: 2, dateOfSession: new Date(2023,9,12).toISOString(), attendingClinicianId: 'user_clinician2', attendingClinicianName: 'Jamie Therapist', attendingClinicianVocation: "Occupational Therapist", content: 'Follow up with Charlie Brown.', attachments: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
 ];
 
 const MOCK_TEAM: User[] = [
@@ -46,7 +46,9 @@ export default function DashboardPage() {
     return "Good evening";
   }
 
-  const sortedRecentSessions = MOCK_SESSIONS.slice().sort((a,b) => new Date(b.dateOfSession).getTime() - new Date(a.dateOfSession).getTime());
+  const sortedRecentSessions = MOCK_SESSIONS.map(s => ({...s, attachments: s.attachments || []})).slice().sort((a,b) => new Date(b.dateOfSession).getTime() - new Date(a.dateOfSession).getTime());
+  const allDashboardSessions = MOCK_SESSIONS.map(s => ({...s, attachments: s.attachments || []}));
+
 
   const renderDashboard = () => {
     switch (user.role) {
@@ -54,12 +56,12 @@ export default function DashboardPage() {
         const clinicianClients = MOCK_CLIENTS.filter(client => 
           client.teamMemberIds?.includes(user.id)
         );
-        const clinicianSessions = MOCK_SESSIONS.filter(session => session.attendingClinicianId === user.id);
+        const clinicianSessions = allDashboardSessions.filter(session => session.attendingClinicianId === user.id);
         return <ClinicianDashboard user={user} clients={clinicianClients} team={MOCK_TEAM} sessions={clinicianSessions} />;
       case 'Admin':
-        return <AdminDashboard user={user} recentSessions={sortedRecentSessions} allSessions={MOCK_SESSIONS} clients={MOCK_CLIENTS} team={MOCK_TEAM} />;
+        return <AdminDashboard user={user} recentSessions={sortedRecentSessions} allSessions={allDashboardSessions} clients={MOCK_CLIENTS} team={MOCK_TEAM} />;
       case 'Super Admin':
-        return <SuperAdminDashboard user={user} recentSessions={sortedRecentSessions} allSessions={MOCK_SESSIONS} clients={MOCK_CLIENTS} team={MOCK_TEAM} />;
+        return <SuperAdminDashboard user={user} recentSessions={sortedRecentSessions} allSessions={allDashboardSessions} clients={MOCK_CLIENTS} team={MOCK_TEAM} />;
       default:
         return <p>Unknown user role.</p>;
     }

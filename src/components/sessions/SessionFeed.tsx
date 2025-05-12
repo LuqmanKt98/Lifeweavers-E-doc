@@ -1,7 +1,7 @@
 // src/components/sessions/SessionFeed.tsx
 "use client";
 
-import type { SessionNote, User } from '@/lib/types';
+import type { SessionNote, User, Attachment } from '@/lib/types';
 import SessionCard from './SessionCard';
 import SessionEditor from './SessionEditor';
 import { useState }  from 'react';
@@ -13,24 +13,16 @@ interface SessionFeedProps {
   clientName: string;
   sessions: SessionNote[];
   currentUser: User;
-  onSessionAdded: (newSession: SessionNote) => void;
+  onSessionAdded: (newSessionData: Omit<SessionNote, 'id' | 'sessionNumber' | 'createdAt' | 'updatedAt'>) => void;
   canModifyNotes: boolean;
 }
 
 export default function SessionFeed({ clientId, clientName, sessions, currentUser, onSessionAdded, canModifyNotes }: SessionFeedProps) {
   const [showEditor, setShowEditor] = useState(false);
   
-  const handleSaveSession = (newSessionData: Omit<SessionNote, 'id' | 'sessionNumber' | 'createdAt' | 'updatedAt'>) => {
-    // In a real app, this would be an API call.
-    // For mock, we generate an ID and update locally.
-    const newSession: SessionNote = {
-      ...newSessionData,
-      id: `sess-${clientId}-${Date.now()}`,
-      sessionNumber: sessions.length + 1, // Simplified session numbering
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    onSessionAdded(newSession);
+  const handleSaveSession = (sessionData: Omit<SessionNote, 'id' | 'sessionNumber' | 'createdAt' | 'updatedAt'>) => {
+    // The onSessionAdded prop now expects the raw data, and the parent page (ClientDetailPage) will handle ID generation etc.
+    onSessionAdded(sessionData);
     setShowEditor(false); // Hide editor after saving
   };
 
@@ -74,4 +66,3 @@ export default function SessionFeed({ clientId, clientName, sessions, currentUse
     </div>
   );
 }
-

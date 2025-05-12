@@ -17,8 +17,17 @@ export interface Client {
   // Other client-specific info can be added here
 }
 
+export interface Attachment {
+  id: string; // Unique ID for the attachment, e.g., a UUID or driveFileId
+  name: string; // Filename, e.g., "progress_report.pdf"
+  mimeType: string; // MIME type, e.g., "application/pdf", "image/jpeg"
+  url: string; // URL to the file, e.g., a Google Drive link or a placeholder
+  previewUrl?: string; // Optional URL for a direct preview (e.g., for images)
+  fileType: 'pdf' | 'image' | 'video' | 'document' | 'spreadsheet' | 'presentation' | 'other';
+}
+
 export interface SessionNote {
-  id: string;
+  id:string;
   clientId: string;
   sessionNumber: number;
   dateOfSession: string; // ISO string
@@ -26,6 +35,7 @@ export interface SessionNote {
   attendingClinicianName: string;
   attendingClinicianVocation?: string;
   content: string; // Rich text content / HTML
+  attachments?: Attachment[]; // Array of attached files
   createdAt: string; // ISO string
   updatedAt: string; // ISO string
   // For version history, more fields would be needed
