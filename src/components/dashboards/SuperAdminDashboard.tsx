@@ -11,11 +11,12 @@ import { ShieldCheck, Users2 } from 'lucide-react';
 interface SuperAdminDashboardProps {
   user: User;
   recentSessions: SessionNote[];
+  allSessions: SessionNote[]; // Added for calendar functionality via AdminDashboard
   clients: Client[];
   team: User[];
 }
 
-export default function SuperAdminDashboard({ user, recentSessions, clients, team }: SuperAdminDashboardProps) {
+export default function SuperAdminDashboard({ user, recentSessions, allSessions, clients, team }: SuperAdminDashboardProps) {
   // Super Admin has all Admin capabilities, plus user management and potentially more.
   return (
     <div className="space-y-6">
@@ -39,8 +40,8 @@ export default function SuperAdminDashboard({ user, recentSessions, clients, tea
         </CardContent>
       </Card>
       
-      {/* Inherit Admin Dashboard sections */}
-      <AdminDashboard user={user} recentSessions={recentSessions} clients={clients} team={team} />
+      {/* Inherit Admin Dashboard sections, passing allSessions for the calendar */}
+      <AdminDashboard user={user} recentSessions={recentSessions} allSessions={allSessions} clients={clients} team={team} />
     </div>
   );
 }

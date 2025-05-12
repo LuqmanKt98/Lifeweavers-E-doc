@@ -8,16 +8,18 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Users, FileText, Briefcase, Clock, ArrowRight, Activity } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
+import EventCalendar from '@/components/shared/EventCalendar';
 
 
 interface AdminDashboardProps {
   user: User;
-  recentSessions: SessionNote[];
+  recentSessions: SessionNote[]; // For the list of recent sessions
+  allSessions: SessionNote[]; // For the calendar view
   clients: Client[];
   team: User[];
 }
 
-export default function AdminDashboard({ user, recentSessions, clients, team }: AdminDashboardProps) {
+export default function AdminDashboard({ user, recentSessions, allSessions, clients, team }: AdminDashboardProps) {
   const getInitials = (name: string) => {
     const names = name.split(' ');
     if (names.length === 1) return names[0][0].toUpperCase();
@@ -53,7 +55,7 @@ export default function AdminDashboard({ user, recentSessions, clients, team }: 
                       <p className="text-xs text-muted-foreground">
                         By {session.attendingClinicianName} ({session.attendingClinicianVocation}) on {format(new Date(session.dateOfSession), 'MMM d, yyyy')}
                       </p>
-                       <p className="text-sm mt-1 italic text-foreground/80 line-clamp-1">"{session.content}"</p>
+                       <p className="text-sm mt-1 italic text-foreground/80 line-clamp-1">"{session.content.replace(/<[^>]*>/g, '')}"</p>
                     </div>
                   </div>
                   <Button variant="outline" size="sm" asChild className="mt-2 sm:mt-0 self-end sm:self-center">
@@ -136,6 +138,10 @@ export default function AdminDashboard({ user, recentSessions, clients, team }: 
           )}
         </CardContent>
       </Card>
+
+      <div className="lg:col-span-3 md:col-span-2">
+        <EventCalendar sessions={allSessions} />
+      </div>
     </div>
   );
 }

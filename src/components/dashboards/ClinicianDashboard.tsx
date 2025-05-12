@@ -1,24 +1,23 @@
 // src/components/dashboards/ClinicianDashboard.tsx
 "use client";
 
-import type { User, Client } from '@/lib/types';
+import type { User, Client, SessionNote } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Users, Briefcase, Clock, ArrowRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-
+import EventCalendar from '@/components/shared/EventCalendar';
 
 interface ClinicianDashboardProps {
   user: User;
   clients: Client[];
   team: User[];
+  sessions: SessionNote[];
 }
 
-export default function ClinicianDashboard({ user, clients, team }: ClinicianDashboardProps) {
-  // Mock: Get last 5 clients, assuming clients are sorted by recent interaction or added date.
-  // For this mock, we'll just take the first 5.
+export default function ClinicianDashboard({ user, clients, team, sessions }: ClinicianDashboardProps) {
   const last5Clients = clients.slice(0, 5);
 
   const getInitials = (name: string) => {
@@ -96,6 +95,10 @@ export default function ClinicianDashboard({ user, clients, team }: ClinicianDas
           )}
         </CardContent>
       </Card>
+      
+      <div className="md:col-span-2 lg:col-span-3">
+        <EventCalendar sessions={sessions} />
+      </div>
     </div>
   );
 }

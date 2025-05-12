@@ -92,4 +92,39 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  /* Styles for react-day-picker customisations */
+  .day-with-session {
+    position: relative;
+    /* Optionally, slightly change background or font for days with sessions */
+    /* Example: background-color: hsl(var(--primary)/0.05); */
+    /* Example: font-weight: 600; color: hsl(var(--primary)); */
+  }
+
+  .day-with-session::after {
+    content: '';
+    position: absolute;
+    bottom: 2px; /* Adjust position as needed */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 5px; /* Adjust size of the dot */
+    height: 5px; /* Adjust size of the dot */
+    border-radius: 50%;
+    background-color: hsl(var(--primary));
+  }
+  
+  /* Ensure dot is visible on selected days, maybe change color */
+  .rdp-day_selected.day-with-session::after {
+    background-color: hsl(var(--primary-foreground)); /* Example: white dot on primary background */
+  }
+
+  .rdp-day_today.day-with-session::after {
+     /* Keep primary color or change if needed for today's highlight */
+  }
+  
+  /* Ensure the calendar itself can be styled for padding if needed */
+  .rdp {
+    --rdp-cell-size: 40px; /* Default cell size, adjust as needed */
+    /* Add any other rdp overrides if necessary */
+  }
 }
