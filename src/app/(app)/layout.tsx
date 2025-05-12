@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 import AppHeader from '@/components/layout/AppHeader';
 import AppSidebar from '@/components/layout/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import type { Client, SpecialNotification } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import SpecialNotificationBanner from '@/components/layout/SpecialNotificationBanner';
@@ -53,6 +53,7 @@ const MOCK_SPECIAL_NOTIFICATIONS_DATA: SpecialNotification[] = [
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [clients, setClients] = useState<Client[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true); // Default to open on desktop
   const [activeSpecialNotifications, setActiveSpecialNotifications] = useState<SpecialNotification[]>([]);
@@ -77,6 +78,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   }, [user, loading, router]);
 
+  const getPageTitle = (currentPathname: string): string => {
+    if (currentPathname === '/dashboard') return 'Dashboard';
+    if (currentPathname.startsWith('/clients/')) {
+      // To get "Client Name - Session Notes" we'd need client data here.
+      // For now, let's keep it generic or reflect the page's main function.
+      // The client detail page already shows client name prominently.
+      return 'Client Session Notes'; 
+    }
+    if (currentPathname === '/admin/users') return 'User Management';
+    if (currentPathname === '/notifications') return 'Notifications';
+    if (currentPathname === '/messages') return 'Messages';
+    // Default title if no match
+    return 'Lifeweaver Notes';
+  };
+
+  const pageTitle = getPageTitle(pathname);
+
   if (loading || !user) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
@@ -99,24 +117,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen bg-secondary/50">
       <AppSidebar clients={clients} isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
       <div className={`flex flex-1 flex-col transition-all duration-300 ease-in-out ${sidebarOpen ? 'md:ml-64' : 'md:ml-16'}`}>
-        <AppHeader user={user} toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
+        <AppHeader user={user} toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} pageTitle={pageTitle} />
         <main className="flex-1 overflow-y-auto">
           <ScrollArea className="h-full">
             <div className="p-4 md:p-6 lg:p-8">
              {children}
-             {activeSpecialNotifications.length > 0 && (
-                <div className="mt-6"> {/* Added margin-top for spacing */}
-                  <SpecialNotificationBanner
-                    notifications={activeSpecialNotifications}
-                    onDismiss={handleDismissSpecialNotification}
-                  />
-                </div>
-              )}
             </div>
           </ScrollArea>
         </main>
+         {activeSpecialNotifications.length > 0 && (
+          <div className="p-4 md:p-6 lg:p-8 pt-0 mt-auto"> {/* Ensures banner is at bottom of main content column before scrollbar */}
+            <SpecialNotificationBanner
+              notifications={activeSpecialNotifications}
+              onDismiss={handleDismissSpecialNotification}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
 }
-

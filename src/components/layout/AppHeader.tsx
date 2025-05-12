@@ -22,9 +22,10 @@ interface AppHeaderProps {
   user: User;
   toggleSidebar: () => void;
   sidebarOpen: boolean;
+  pageTitle: string;
 }
 
-export default function AppHeader({ user, toggleSidebar, sidebarOpen }: AppHeaderProps) {
+export default function AppHeader({ user, toggleSidebar, sidebarOpen, pageTitle }: AppHeaderProps) {
   const { logout } = useAuth();
   const { setTheme, theme } = useTheme();
 
@@ -36,18 +37,21 @@ export default function AppHeader({ user, toggleSidebar, sidebarOpen }: AppHeade
 
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background px-4 md:px-6 shadow-sm">
-      <div className="flex items-center">
-        <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-2 md:hidden">
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-1 md:hidden">
           {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </Button>
-         <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-2 hidden md:inline-flex">
+         <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-1 hidden md:inline-flex">
           <Menu className="h-6 w-6" />
         </Button>
         <Link href="/dashboard" className="flex items-center">
-          <Logo className="h-8 w-auto" /> {/* Use Logo component */}
+          <Logo className="h-8 w-auto" iconOnly /> {/* Display icon only for space */}
         </Link>
+        <h1 className="text-xl font-semibold text-foreground truncate hidden sm:block">
+          {pageTitle}
+        </h1>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
         <Button
             variant="ghost"
             size="icon"
