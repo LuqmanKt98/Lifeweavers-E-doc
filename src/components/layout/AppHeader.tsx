@@ -45,8 +45,8 @@ export default function AppHeader({ user, toggleSidebar, sidebarOpen, pageTitle 
          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-1 hidden md:inline-flex flex-shrink-0">
           <Menu className="h-6 w-6" />
         </Button>
-        <Link href="/dashboard" className="flex items-center flex-shrink-0">
-          <Logo className="h-8 w-auto" iconOnly /> {/* Display icon only for space */}
+        <Link href="/dashboard" className="flex items-center flex-shrink-0 mr-2">
+           <Logo iconOnly width={32} height={32} className="h-8 w-auto" />
         </Link>
         <h1 className="text-xl font-semibold text-foreground truncate"> {/* Removed hidden sm:block */}
           {pageTitle}

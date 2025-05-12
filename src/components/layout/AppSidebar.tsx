@@ -61,7 +61,12 @@ export default function AppSidebar({ clients, isOpen, toggleSidebar }: AppSideba
       >
         <div className={cn("flex items-center border-b border-sidebar-border px-4", isOpen ? "h-16 justify-between" : "h-16 justify-center")}>
           <Link href="/dashboard" className={cn("flex items-center gap-2 group", !isOpen && "justify-center")}>
-             <Logo className={cn("h-8 w-auto transition-all duration-300", isOpen ? "max-w-full" : "max-w-[2rem]")} iconOnly={!isOpen} />
+             <Logo 
+                iconOnly={!isOpen} 
+                width={isOpen ? 150 : 32} 
+                height={isOpen ? 37.5 : 32} 
+                className={cn("transition-all duration-300", isOpen ? "h-auto max-w-[150px]" : "h-8 w-8")} 
+             />
           </Link>
           {isOpen && (
             <Button variant="ghost" size="icon" onClick={toggleSidebar} className="md:hidden">
