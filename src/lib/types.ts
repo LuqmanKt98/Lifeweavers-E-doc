@@ -72,3 +72,13 @@ export interface Message {
   timestamp: string; // ISO string
   isOwnMessage?: boolean; // Helper for UI rendering
 }
+
+// Special Notification for Banners
+export interface SpecialNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'warning' | 'critical' | 'promo';
+  link?: string;
+  // isActive is managed by the component displaying the banner list
+}
