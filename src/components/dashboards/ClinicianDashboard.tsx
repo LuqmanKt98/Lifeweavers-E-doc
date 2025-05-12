@@ -8,16 +8,16 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Users, Briefcase, Clock, ArrowRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import EventCalendar from '@/components/shared/EventCalendar';
+// EventCalendar import removed
 
 interface ClinicianDashboardProps {
   user: User;
   clients: Client[];
   team: User[];
-  sessions: SessionNote[];
+  // sessions prop removed
 }
 
-export default function ClinicianDashboard({ user, clients, team, sessions }: ClinicianDashboardProps) {
+export default function ClinicianDashboard({ user, clients, team }: ClinicianDashboardProps) {
   const last5Clients = clients.slice(0, 5);
 
   const getInitials = (name: string) => {
@@ -28,11 +28,9 @@ export default function ClinicianDashboard({ user, clients, team, sessions }: Cl
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      <div className="md:col-span-2 lg:col-span-3">
-        <EventCalendar sessions={sessions} />
-      </div>
+      {/* EventCalendar rendering removed from here */}
 
-      <Card className="lg:col-span-2">
+      <Card className="lg:col-span-2 md:col-span-2"> {/* Adjusted span */}
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-6 w-6 text-primary" />
@@ -70,7 +68,7 @@ export default function ClinicianDashboard({ user, clients, team, sessions }: Cl
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="md:col-span-1"> {/* Adjusted span */}
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Briefcase className="h-6 w-6 text-primary" />

@@ -8,18 +8,17 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Users, FileText, Briefcase, Clock, ArrowRight, Activity } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
-import EventCalendar from '@/components/shared/EventCalendar';
-
+// EventCalendar import removed as it's now in AppLayout
 
 interface AdminDashboardProps {
   user: User;
   recentSessions: SessionNote[]; // For the list of recent sessions
-  allSessions: SessionNote[]; // For the calendar view
+  // allSessions prop removed
   clients: Client[];
   team: User[];
 }
 
-export default function AdminDashboard({ user, recentSessions, allSessions, clients, team }: AdminDashboardProps) {
+export default function AdminDashboard({ user, recentSessions, clients, team }: AdminDashboardProps) {
   const getInitials = (name: string) => {
     const names = name.split(' ');
     if (names.length === 1) return names[0][0].toUpperCase();
@@ -30,11 +29,9 @@ export default function AdminDashboard({ user, recentSessions, allSessions, clie
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      <div className="lg:col-span-3 md:col-span-2">
-        <EventCalendar sessions={allSessions} />
-      </div>
+      {/* EventCalendar rendering removed from here */}
 
-      <Card className="lg:col-span-2">
+      <Card className="lg:col-span-2 md:col-span-2"> {/* Adjusted span since calendar is removed */}
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-6 w-6 text-primary" />
@@ -74,7 +71,7 @@ export default function AdminDashboard({ user, recentSessions, allSessions, clie
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="md:col-span-1"> {/* Adjusted span */}
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Activity className="h-6 w-6 text-primary" />
@@ -113,7 +110,7 @@ export default function AdminDashboard({ user, recentSessions, allSessions, clie
         </CardContent>
       </Card>
       
-      <Card className="lg:col-span-3">
+      <Card className="lg:col-span-3 md:col-span-2"> {/* Keep this full width */}
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Briefcase className="h-6 w-6 text-primary" />

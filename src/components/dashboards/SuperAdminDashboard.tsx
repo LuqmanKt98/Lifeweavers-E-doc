@@ -11,12 +11,12 @@ import { ShieldCheck, UserCog, MessagesSquare, ListChecks } from 'lucide-react';
 interface SuperAdminDashboardProps {
   user: User;
   recentSessions: SessionNote[];
-  allSessions: SessionNote[];
+  // allSessions prop removed
   clients: Client[];
   team: User[];
 }
 
-export default function SuperAdminDashboard({ user, recentSessions, allSessions, clients, team }: SuperAdminDashboardProps) {
+export default function SuperAdminDashboard({ user, recentSessions, clients, team }: SuperAdminDashboardProps) {
   return (
     <div className="space-y-6">
       <Card className="border-accent bg-accent/10">
@@ -87,9 +87,8 @@ export default function SuperAdminDashboard({ user, recentSessions, allSessions,
         </Card>
       </div>
       
-      {/* Inherit Admin Dashboard sections */}
-      <AdminDashboard user={user} recentSessions={recentSessions} allSessions={allSessions} clients={clients} team={team} />
+      {/* Inherit Admin Dashboard sections - pass props without allSessions */}
+      <AdminDashboard user={user} recentSessions={recentSessions} clients={clients} team={team} />
     </div>
   );
 }
-

@@ -6,10 +6,11 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppSidebar from '@/components/layout/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
-import type { SpecialNotification } from '@/lib/types';
+import type { SpecialNotification, SessionNote } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import SpecialNotificationBanner from '@/components/layout/SpecialNotificationBanner';
-import { MOCK_CLIENTS_DB } from '@/lib/mockDatabase'; 
+import EventCalendar from '@/components/shared/EventCalendar';
+import { MOCK_CLIENTS_DB, MOCK_SESSIONS_DB } from '@/lib/mockDatabase'; 
 
 // Mock data for special notifications
 const MOCK_SPECIAL_NOTIFICATIONS_DATA: SpecialNotification[] = [
@@ -69,7 +70,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (currentPathname === '/dashboard') return 'Dashboard';
     if (currentPathname.startsWith('/clients/')) {
       const clientId = currentPathname.split('/')[2];
-      const client = MOCK_CLIENTS_DB[clientId]; // MOCK_CLIENTS_DB is directly accessible
+      const client = MOCK_CLIENTS_DB[clientId]; 
       return client ? `${client.name} - Notes` : 'Client Session Notes'; 
     }
     if (currentPathname === '/admin/users') return 'User Management';
@@ -98,6 +99,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Prepare sessions for EventCalendar based on user role
+  const MOCK_ALL_SESSIONS_ARRAY: SessionNote[] = Object.values(MOCK_SESSIONS_DB).flat();
+  const allProcessedSessions = MOCK_ALL_SESSIONS_ARRAY.map(s => ({...s, attachments: s.attachments || []}));
+
+  let sessionsForCalendarView: SessionNote[];
+  if (user.role === 'Admin' || user.role === 'Super Admin') {
+    sessionsForCalendarView = allProcessedSessions;
+  } else if (user.role === 'Clinician') {
+    sessionsForCalendarView = allProcessedSessions.filter(session => session.attendingClinicianId === user.id);
+  } else {
+    sessionsForCalendarView = []; // Default to empty if role doesn't match
+  }
+
   return (
     <div className="flex h-screen bg-secondary/50">
       <AppSidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
@@ -105,7 +119,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <AppHeader user={user} toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} pageTitle={pageTitle} />
         <main className="flex-1 overflow-y-auto">
           <ScrollArea className="h-full">
-            <div className="p-4 md:p-6 lg:p-8">
+            <div className="p-4 md:p-6 lg:p-8 space-y-6">
+             <EventCalendar sessions={sessionsForCalendarView} />
              {children}
             </div>
           </ScrollArea>

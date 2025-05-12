@@ -34,9 +34,11 @@ export default function DashboardPage() {
     return "Good evening";
   }
 
-  // Use the array versions of mock data
-  const sortedRecentSessions = MOCK_ALL_SESSIONS_ARRAY.map(s => ({...s, attachments: s.attachments || []})).slice().sort((a,b) => new Date(b.dateOfSession).getTime() - new Date(a.dateOfSession).getTime());
-  const allDashboardSessions = MOCK_ALL_SESSIONS_ARRAY.map(s => ({...s, attachments: s.attachments || []}));
+  // Process recent sessions for Admin/SuperAdmin dashboards
+  const sortedRecentSessions = MOCK_ALL_SESSIONS_ARRAY
+    .map(s => ({...s, attachments: s.attachments || []}))
+    .slice()
+    .sort((a,b) => new Date(b.dateOfSession).getTime() - new Date(a.dateOfSession).getTime());
 
 
   const renderDashboard = () => {
@@ -45,12 +47,14 @@ export default function DashboardPage() {
         const clinicianClients = MOCK_CLIENTS_ARRAY.filter(client => 
           client.teamMemberIds?.includes(user.id)
         );
-        const clinicianSessions = allDashboardSessions.filter(session => session.attendingClinicianId === user.id);
-        return <ClinicianDashboard user={user} clients={clinicianClients} team={MOCK_TEAM_ARRAY} sessions={clinicianSessions} />;
+        // clinicianSessions for calendar is now handled by AppLayout
+        return <ClinicianDashboard user={user} clients={clinicianClients} team={MOCK_TEAM_ARRAY} />;
       case 'Admin':
-        return <AdminDashboard user={user} recentSessions={sortedRecentSessions} allSessions={allDashboardSessions} clients={MOCK_CLIENTS_ARRAY} team={MOCK_TEAM_ARRAY} />;
+        // allDashboardSessions for calendar is now handled by AppLayout
+        return <AdminDashboard user={user} recentSessions={sortedRecentSessions} clients={MOCK_CLIENTS_ARRAY} team={MOCK_TEAM_ARRAY} />;
       case 'Super Admin':
-        return <SuperAdminDashboard user={user} recentSessions={sortedRecentSessions} allSessions={allDashboardSessions} clients={MOCK_CLIENTS_ARRAY} team={MOCK_TEAM_ARRAY} />;
+        // allDashboardSessions for calendar is now handled by AppLayout
+        return <SuperAdminDashboard user={user} recentSessions={sortedRecentSessions} clients={MOCK_CLIENTS_ARRAY} team={MOCK_TEAM_ARRAY} />;
       default:
         return <p>Unknown user role.</p>;
     }
