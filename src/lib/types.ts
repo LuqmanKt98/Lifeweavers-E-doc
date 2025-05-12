@@ -109,3 +109,14 @@ export interface ToDoTask {
   isSystemGenerated?: boolean;
   notes?: string; // Optional field for additional notes on the task
 }
+
+// Progress Review Report
+export interface ProgressReviewReport {
+  id: string;
+  clientId: string;
+  clientName: string; // Added for convenience in the report
+  generatedAt: string; // ISO string
+  generatedByUserId: string;
+  generatedByUserName: string;
+  reportHtmlContent: string; // AI-generated report text in HTML format
+}

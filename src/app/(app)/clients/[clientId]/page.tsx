@@ -4,14 +4,16 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import type { Client, SessionNote, User, Attachment, ToDoTask } from '@/lib/types';
+import type { Client, SessionNote, User, Attachment, ToDoTask, ProgressReviewReport } from '@/lib/types';
 import { useAuth } from '@/contexts/AuthContext';
 import SessionFeed from '@/components/sessions/SessionFeed';
-import ToDoList from '@/components/todo/ToDoList'; // Import ToDoList
+import ToDoList from '@/components/todo/ToDoList';
+import ProgressReportModal from '@/components/reports/ProgressReportModal'; // Import the new modal
+import { generateProgressReport } from '@/ai/flows/generate-progress-report'; // Import AI flow
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle, User as UserIcon, Users, Trash2, ListChecks } from 'lucide-react';
-import { format, formatDistanceToNow, addDays, startOfDay, isPast } from 'date-fns'; // Added isPast
+import { AlertTriangle, User as UserIcon, Users, Trash2, ListChecks, FileCog, Loader2 } from 'lucide-react';
+import { format, formatDistanceToNow, addDays, startOfDay, isPast } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -30,16 +32,16 @@ const MOCK_CLIENTS_DB: Record<string, Client> = {
 
 const MOCK_SESSIONS_DB: Record<string, SessionNote[]> = {
   'client-1': [
-    { id: 'sess-1-1', clientId: 'client-1', sessionNumber: 1, dateOfSession: new Date(2023, 7, 1).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: 'Physiotherapist', content: 'Initial assessment. Patient presents with lower back pain.', attachments: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'sess-1-2', clientId: 'client-1', sessionNumber: 2, dateOfSession: new Date(2023, 7, 8).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: 'Physiotherapist', content: 'Follow-up session. Introduced light exercises. Pain reported as 5/10.', attachments: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'sess-1-3', clientId: 'client-1', sessionNumber: 3, dateOfSession: new Date(2023,8,10).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: 'Physiotherapist', content: 'Patient reported improvement in mobility. Pain 3/10.', attachments: [
+    { id: 'sess-1-1', clientId: 'client-1', sessionNumber: 1, dateOfSession: new Date(2023, 7, 1).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: 'Physiotherapist', content: '<p>Initial assessment. Patient presents with lower back pain, radiating to the left leg. ROM limited in lumbar flexion and extension.</p><p>Objective: Decrease pain, improve ROM, and educate on self-management.</p>', attachments: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    { id: 'sess-1-2', clientId: 'client-1', sessionNumber: 2, dateOfSession: new Date(2023, 7, 8).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: 'Physiotherapist', content: '<p>Follow-up session. Introduced light exercises: pelvic tilts, knee-to-chest stretches. Pain reported as 5/10 on VAS, down from 7/10.</p><p>Plan: Continue with current exercises, monitor pain levels.</p>', attachments: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    { id: 'sess-1-3', clientId: 'client-1', sessionNumber: 3, dateOfSession: new Date(2023,8,10).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: 'Physiotherapist', content: '<p>Patient reported improvement in mobility. Pain 3/10. Able to perform exercises with less discomfort.</p><p>Discussed importance of posture during daily activities. Attached MRI scan for review.</p>', attachments: [
         { id: 'att-1-3-1', name: 'Lumbar_MRI_Scan.pdf', mimeType: 'application/pdf', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', fileType: 'pdf' }
     ], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'sess-1-4', clientId: 'client-1', sessionNumber: 4, dateOfSession: new Date(2023,8,17).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: 'Physiotherapist', content: 'Continued with range of motion exercises. Patient progressing well.', attachments: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    { id: 'sess-1-4', clientId: 'client-1', sessionNumber: 4, dateOfSession: new Date(2023,8,17).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: 'Physiotherapist', content: '<p>Continued with range of motion exercises. Patient progressing well. Lumbar flexion improved by 15 degrees. Pain now 2/10 at rest.</p><p>Introduced core strengthening exercises.</p>', attachments: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
   ],
   'client-2': [
-    { id: 'sess-2-1', clientId: 'client-2', sessionNumber: 1, dateOfSession: new Date(2023, 7, 5).toISOString(), attendingClinicianId: 'user_clinician2', attendingClinicianName: 'Jamie Therapist', attendingClinicianVocation: 'Occupational Therapist', content: 'First session. Discussed goals and challenges.', attachments: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'sess-2-2', clientId: 'client-2', sessionNumber: 2, dateOfSession: new Date(2023,8,11).toISOString(), attendingClinicianId: 'user_clinician2', attendingClinicianName: 'Jamie Therapist', attendingClinicianVocation: 'Occupational Therapist', content: 'Discussed coping strategies for workplace stress. Introduced mindfulness techniques.', attachments: [
+    { id: 'sess-2-1', clientId: 'client-2', sessionNumber: 1, dateOfSession: new Date(2023, 7, 5).toISOString(), attendingClinicianId: 'user_clinician2', attendingClinicianName: 'Jamie Therapist', attendingClinicianVocation: 'Occupational Therapist', content: '<p>First session. Discussed goals: improve daily task management and reduce workplace stress.</p><p>Patient reports feeling overwhelmed with current workload.</p>', attachments: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    { id: 'sess-2-2', clientId: 'client-2', sessionNumber: 2, dateOfSession: new Date(2023,8,11).toISOString(), attendingClinicianId: 'user_clinician2', attendingClinicianName: 'Jamie Therapist', attendingClinicianVocation: 'Occupational Therapist', content: '<p>Discussed coping strategies for workplace stress. Introduced mindfulness techniques (body scan, mindful breathing).</p><p>Patient receptive and found initial practice calming. Provided resources on mindfulness and workplace ergonomics.</p>', attachments: [
         { id: 'att-2-2-1', name: 'Mindfulness_Guide.pdf', mimeType: 'application/pdf', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', fileType: 'pdf'},
         { id: 'att-2-2-2', name: 'Workplace_Ergonomics.jpg', mimeType: 'image/jpeg', url: 'https://picsum.photos/seed/ergonomics/600/400', previewUrl: 'https://picsum.photos/seed/ergonomics/600/400', fileType: 'image' }
     ], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
@@ -83,13 +85,17 @@ export default function ClientDetailPage() {
 
   const [client, setClient] = useState<Client | null>(null);
   const [sessions, setSessions] = useState<SessionNote[]>([]);
-  const [todoTasks, setTodoTasks] = useState<ToDoTask[]>([]); // State for ToDo tasks
+  const [todoTasks, setTodoTasks] = useState<ToDoTask[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [selectedClinicianToAdd, setSelectedClinicianToAdd] = useState<string>('');
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [generatedReport, setGeneratedReport] = useState<ProgressReviewReport | null>(null);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   
   const canManageTeam = user && (user.role === 'Admin' || user.role === 'Super Admin');
   const isTeamMember = user && client && user.role === 'Clinician' && client.teamMemberIds?.includes(user.id);
-  const canModifyNotesAndTasks = canManageTeam || isTeamMember; // Permission for notes and tasks
+  const canModifyNotesAndTasks = canManageTeam || isTeamMember;
+  const canGenerateReport = canModifyNotesAndTasks; // Same permissions for report generation
   const canDeleteSystemGeneratedTasks = user?.role === 'Super Admin';
 
 
@@ -237,12 +243,10 @@ export default function ClientDetailPage() {
     const targetTask = updatedTasks.find(t => t.id === taskId);
     toast({ title: `Task ${targetTask?.isDone ? 'Completed' : 'Marked Pending'}`, description: `"${targetTask?.description}" status updated.` });
 
-    // If a system-generated task (like 30-day review) is completed, try to sync/generate the next one
     if (targetTask?.isSystemGenerated && targetTask.isDone && client) {
         const newTaskList = synchronizePresetTasks(client, updatedTasks);
-        setTodoTasks(newTaskList); // This might cause a double toast if synchronizePresetTasks also toasts
+        setTodoTasks(newTaskList);
     }
-
   };
   
   const handleRemoveToDoTask = (taskId: string) => {
@@ -259,6 +263,54 @@ export default function ClientDetailPage() {
     setTodoTasks(updatedTasks);
     MOCK_TODO_TASKS_DB[client.id] = updatedTasks;
     toast({ title: "Task Removed", description: `"${taskToRemove.description}" has been removed.` });
+  };
+
+  const handleGenerateProgressReport = async () => {
+    if (!client || !user) {
+      toast({ title: "Error", description: "Client or user data not available.", variant: "destructive" });
+      return;
+    }
+    if (sessions.length === 0) {
+      toast({ title: "No Session Notes", description: "Cannot generate a report without any session notes for this client.", variant: "default" });
+      return;
+    }
+
+    setIsGeneratingReport(true);
+    setGeneratedReport(null); // Clear previous report
+    setIsReportModalOpen(true); // Open modal to show loading state
+
+    try {
+      // Format session notes for the AI
+      const sessionNotesText = sessions
+        .map(s => `Date: ${format(new Date(s.dateOfSession), 'yyyy-MM-dd')}\nClinician: ${s.attendingClinicianName}\nContent: ${s.content.replace(/<[^>]+>/g, ' ')}\n---`)
+        .join('\n\n');
+      
+      const aiInput = {
+        clientName: client.name,
+        sessionNotesText: sessionNotesText,
+      };
+
+      const result = await generateProgressReport(aiInput);
+
+      const newReport: ProgressReviewReport = {
+        id: `report-${client.id}-${Date.now()}`,
+        clientId: client.id,
+        clientName: client.name,
+        generatedAt: new Date().toISOString(),
+        generatedByUserId: user.id,
+        generatedByUserName: user.name,
+        reportHtmlContent: result.reportHtmlContent,
+      };
+      setGeneratedReport(newReport);
+      toast({ title: "Progress Report Generated", description: "The AI has drafted the progress report.", variant: "default" });
+
+    } catch (error) {
+      console.error("Error generating progress report:", error);
+      toast({ title: "Report Generation Failed", description: (error as Error).message || "Could not generate the report. Please try again.", variant: "destructive" });
+      setIsReportModalOpen(false); // Close modal on hard failure
+    } finally {
+      setIsGeneratingReport(false);
+    }
   };
 
 
@@ -341,6 +393,12 @@ export default function ClientDetailPage() {
                 Pending Tasks: {todoTasks.filter(t => !t.isDone).length}.
               </CardDescription>
             </div>
+             {canGenerateReport && (
+                <Button onClick={handleGenerateProgressReport} disabled={isGeneratingReport || sessions.length === 0} variant="outline">
+                {isGeneratingReport ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileCog className="mr-2 h-4 w-4" />}
+                {isGeneratingReport ? 'Generating...' : 'Generate Progress Report'}
+                </Button>
+            )}
           </div>
         </CardHeader>
       </Card>
@@ -445,6 +503,14 @@ export default function ClientDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      <ProgressReportModal
+        report={generatedReport}
+        client={client}
+        isOpen={isReportModalOpen}
+        onOpenChange={setIsReportModalOpen}
+        isGenerating={isGeneratingReport}
+      />
     </div>
   );
 }
