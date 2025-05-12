@@ -7,17 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { User } from '@/lib/types';
-import { ShieldAlert, UserCog, Edit, Trash2 } from 'lucide-react'; // Changed UserPlus to UserCog
-
-// Mock users data for demonstration
-const MOCK_ALL_USERS: User[] = [
-  { id: 'user_superadmin', email: 'superadmin@lifeweaver.com', name: 'Dr. Super Admin', role: 'Super Admin', vocation: 'Lead Therapist' },
-  { id: 'user_admin', email: 'admin@lifeweaver.com', name: 'Alex Admin', role: 'Admin', vocation: 'Clinic Manager' },
-  { id: 'user_clinician', email: 'clinician@lifeweaver.com', name: 'Casey Clinician', role: 'Clinician', vocation: 'Physiotherapist' },
-  { id: 'user_clinician2', email: 'clinician2@lifeweaver.com', name: 'Jamie Therapist', role: 'Clinician', vocation: 'Occupational Therapist' },
-  { id: 'user_new1', email: 'new.user1@example.com', name: 'Taylor New', role: 'Clinician', vocation: 'Speech Therapist' },
-  { id: 'user_new2', email: 'new.user2@example.com', name: 'Morgan Recruit', role: 'Admin' },
-];
+import { ShieldAlert, UserCog, Edit, Trash2 } from 'lucide-react';
+import { MOCK_ALL_USERS_DATABASE } from '@/lib/mockDatabase';
 
 export default function UserManagementPage() {
   const { user } = useAuth();
@@ -74,7 +65,7 @@ export default function UserManagementPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {MOCK_ALL_USERS.map((u) => (
+              {MOCK_ALL_USERS_DATABASE.map((u) => (
                 <TableRow key={u.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">

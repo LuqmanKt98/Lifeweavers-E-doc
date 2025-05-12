@@ -8,8 +8,8 @@ import type { Client, SessionNote, User, Attachment, ToDoTask, ProgressReviewRep
 import { useAuth } from '@/contexts/AuthContext';
 import SessionFeed from '@/components/sessions/SessionFeed';
 import ToDoList from '@/components/todo/ToDoList';
-import ProgressReportModal from '@/components/reports/ProgressReportModal'; // Import the new modal
-import { generateProgressReport } from '@/ai/flows/generate-progress-report'; // Import AI flow
+import ProgressReportModal from '@/components/reports/ProgressReportModal';
+import { generateProgressReport } from '@/ai/flows/generate-progress-report';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, User as UserIconProp, Users, Trash2, ListChecks, FileCog, Loader2 } from 'lucide-react';
@@ -18,69 +18,13 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-
-
-// Mock data - In a real app, this would be fetched
-const MOCK_CLIENTS_DB: Record<string, Client> = {
-  'client-1': { id: 'client-1', name: 'John Doe', dateAdded: new Date(2023, 0, 15).toISOString(), teamMemberIds: ['user_clinician'] },
-  'client-2': { id: 'client-2', name: 'Jane Smith', dateAdded: new Date(2023, 2, 10).toISOString(), teamMemberIds: ['user_clinician2', 'user_clinician'] },
-  'client-3': { id: 'client-3', name: 'Alice Johnson', dateAdded: new Date(2022, 11, 1).toISOString(), teamMemberIds: [] },
-  'client-4': { id: 'client-4', name: 'Bob Williams', dateAdded: new Date(2023, 5, 20).toISOString(), teamMemberIds: ['user_clinician'] },
-  'client-5': { id: 'client-5', name: 'Charlie Brown', dateAdded: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), teamMemberIds: ['user_new1'] }, // Added recently for todo testing
-  'client-6': { id: 'client-6', name: 'Diana Prince', dateAdded: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString(), teamMemberIds: ['user_clinician', 'user_clinician2', 'user_new1'] }, // Added >30 days ago for todo testing
-};
-
-const MOCK_SESSIONS_DB: Record<string, SessionNote[]> = {
-  'client-1': [
-    { id: 'sess-1-1', clientId: 'client-1', sessionNumber: 1, dateOfSession: new Date(2023, 7, 1).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: 'Physiotherapist', content: '<p>Initial assessment. Patient presents with lower back pain, radiating to the left leg. ROM limited in lumbar flexion and extension.</p><p>Objective: Decrease pain, improve ROM, and educate on self-management.</p>', attachments: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'sess-1-2', clientId: 'client-1', sessionNumber: 2, dateOfSession: new Date(2023, 7, 8).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: 'Physiotherapist', content: '<p>Follow-up session. Introduced light exercises: pelvic tilts, knee-to-chest stretches. Pain reported as 5/10 on VAS, down from 7/10.</p><p>Plan: Continue with current exercises, monitor pain levels.</p>', attachments: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'sess-1-3', clientId: 'client-1', sessionNumber: 3, dateOfSession: new Date(2023,8,10).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: 'Physiotherapist', content: '<p>Patient reported improvement in mobility. Pain 3/10. Able to perform exercises with less discomfort.</p><p>Discussed importance of posture during daily activities. Attached MRI scan for review.</p>', attachments: [
-        { id: 'att-1-3-1', name: 'Lumbar_MRI_Scan.pdf', mimeType: 'application/pdf', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', fileType: 'pdf' }
-    ], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'sess-1-4', clientId: 'client-1', sessionNumber: 4, dateOfSession: new Date(2023,8,17).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: 'Physiotherapist', content: '<p>Continued with range of motion exercises. Patient progressing well. Lumbar flexion improved by 15 degrees. Pain now 2/10 at rest.</p><p>Introduced core strengthening exercises.</p>', attachments: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  ],
-  'client-2': [
-    { id: 'sess-2-1', clientId: 'client-2', sessionNumber: 1, dateOfSession: new Date(2023, 7, 5).toISOString(), attendingClinicianId: 'user_clinician2', attendingClinicianName: 'Jamie Therapist', attendingClinicianVocation: 'Occupational Therapist', content: '<p>First session. Discussed goals: improve daily task management and reduce workplace stress.</p><p>Patient reports feeling overwhelmed with current workload.</p>', attachments: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'sess-2-2', clientId: 'client-2', sessionNumber: 2, dateOfSession: new Date(2023,8,11).toISOString(), attendingClinicianId: 'user_clinician2', attendingClinicianName: 'Jamie Therapist', attendingClinicianVocation: 'Occupational Therapist', content: '<p>Discussed coping strategies for workplace stress. Introduced mindfulness techniques (body scan, mindful breathing).</p><p>Patient receptive and found initial practice calming. Provided resources on mindfulness and workplace ergonomics.</p>', attachments: [
-        { id: 'att-2-2-1', name: 'Mindfulness_Guide.pdf', mimeType: 'application/pdf', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', fileType: 'pdf'},
-        { id: 'att-2-2-2', name: 'Workplace_Ergonomics.jpg', mimeType: 'image/jpeg', url: 'https://picsum.photos/seed/ergonomics/600/400', previewUrl: 'https://picsum.photos/seed/ergonomics/600/400', fileType: 'image' }
-    ], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  ],
-};
-
-const MOCK_ALL_CLINICIANS_FOR_SELECTION: User[] = [
-  { id: 'user_clinician', email: 'clinician@lifeweaver.com', name: 'Casey Clinician', role: 'Clinician', vocation: 'Physiotherapist' },
-  { id: 'user_clinician2', email: 'clinician2@lifeweaver.com', name: 'Jamie Therapist', role: 'Clinician', vocation: 'Occupational Therapist' },
-  { id: 'user_new1', email: 'new.user1@example.com', name: 'Taylor New', role: 'Clinician', vocation: 'Speech Therapist' },
-  { id: 'user_admin', email: 'admin@lifeweaver.com', name: 'Alex Admin', role: 'Admin', vocation: 'Clinic Manager' }, // Added Admin here
-];
-
-// Mock DB for ToDo Tasks
-let MOCK_TODO_TASKS_DB: Record<string, ToDoTask[]> = {
-    'client-1': [
-        { id: 'todo-1-1', clientId: 'client-1', description: 'Follow up on home exercise plan adherence.', isDone: false, createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), addedByUserId: 'user_clinician', addedByUserName: 'Casey Clinician', assignedToUserIds: ['user_clinician', 'user_admin'], assignedToUserNames: ['Casey Clinician', 'Alex Admin'], dueDate: format(addDays(new Date(), 5), 'yyyy-MM-dd') },
-        { id: 'todo-1-2', clientId: 'client-1', description: 'Schedule next appointment.', isDone: true, createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), addedByUserId: 'user_admin', addedByUserName: 'Alex Admin', assignedToUserIds: ['user_admin'], assignedToUserNames: ['Alex Admin'], completedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), completedByUserId: 'user_admin', completedByUserName: 'Alex Admin' },
-    ],
-    'client-6': [ // Client added >30 days ago
-        { 
-            id: 'todo-6-sys-1', clientId: 'client-6', 
-            description: 'Conduct 1st Progress Review (30 days post-intake)', 
-            isDone: true, 
-            createdAt: MOCK_CLIENTS_DB['client-6'].dateAdded, 
-            addedByUserId: 'system', addedByUserName: 'System', 
-            assignedToUserIds: ['user_clinician', 'user_admin'], 
-            assignedToUserNames: ['Casey Clinician', 'Alex Admin'],
-            dueDate: format(addDays(new Date(MOCK_CLIENTS_DB['client-6'].dateAdded), 30), 'yyyy-MM-dd'),
-            isSystemGenerated: true,
-            completedAt: format(addDays(new Date(MOCK_CLIENTS_DB['client-6'].dateAdded), 28), 'yyyy-MM-dd'), 
-            completedByUserId: 'user_clinician',
-            completedByUserName: 'Casey Clinician',
-        }
-    ]
-};
-
-const ADMIN_USER_ID = 'user_admin';
-const ADMIN_USER_NAME = 'Alex Admin';
+import { 
+  MOCK_CLIENTS_DB, 
+  MOCK_SESSIONS_DB, 
+  MOCK_TODO_TASKS_DB,
+  getCliniciansAndAdminsForSelection,
+  getAdminUser
+} from '@/lib/mockDatabase';
 
 
 export default function ClientDetailPage() {
@@ -98,10 +42,16 @@ export default function ClientDetailPage() {
   const [generatedReport, setGeneratedReport] = useState<ProgressReviewReport | null>(null);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   
+  const ALL_CLINICIANS_AND_ADMINS_FOR_SELECTION = getCliniciansAndAdminsForSelection();
+  const ADMIN_USER = getAdminUser();
+  const ADMIN_USER_ID = ADMIN_USER?.id || 'user_admin'; // Fallback, though admin should always exist
+  const ADMIN_USER_NAME = ADMIN_USER?.name || 'Admin';
+
+
   const canManageTeam = user && (user.role === 'Admin' || user.role === 'Super Admin');
   const isTeamMember = user && client && user.role === 'Clinician' && client.teamMemberIds?.includes(user.id);
   const canModifyNotesAndTasks = canManageTeam || isTeamMember;
-  const canGenerateReport = canModifyNotesAndTasks; // Same permissions for report generation
+  const canGenerateReport = canModifyNotesAndTasks;
   const canDeleteSystemGeneratedTasks = user?.role === 'Super Admin';
 
 
@@ -115,15 +65,12 @@ export default function ClientDetailPage() {
     const getFirstTeamMemberOrAdmin = (): Pick<User, 'id' | 'name'> => {
         if (currentClient.teamMemberIds && currentClient.teamMemberIds.length > 0) {
             const firstMemberId = currentClient.teamMemberIds[0];
-            const member = MOCK_ALL_CLINICIANS_FOR_SELECTION.find(c => c.id === firstMemberId);
+            const member = ALL_CLINICIANS_AND_ADMINS_FOR_SELECTION.find(c => c.id === firstMemberId);
             if (member) return member;
         }
-        // Default to Admin if no team members or first member not found
-        return MOCK_ALL_CLINICIANS_FOR_SELECTION.find(c => c.id === ADMIN_USER_ID) || {id: ADMIN_USER_ID, name: ADMIN_USER_NAME};
+        return ALL_CLINICIANS_AND_ADMINS_FOR_SELECTION.find(c => c.id === ADMIN_USER_ID) || {id: ADMIN_USER_ID, name: ADMIN_USER_NAME};
     };
 
-
-    // 1. 30-Day Progress Review
     const thirtyDayReviewDesc = "Conduct 1st Progress Review (30 days post-intake)";
     let thirtyDayReview = updatedTasks.find(task => task.description === thirtyDayReviewDesc && task.isSystemGenerated);
     if (!thirtyDayReview) {
@@ -152,7 +99,6 @@ export default function ClientDetailPage() {
       toast({ title: "System Task Added", description: `"${thirtyDayReviewDesc}" scheduled. ${assigneeText}`, variant: "default" });
     }
 
-    // 2. 60-Day Follow-up Progress Review (if 30-day is done or significantly past due)
     if (thirtyDayReview && (thirtyDayReview.isDone || (thirtyDayReview.dueDate && isPast(addDays(new Date(thirtyDayReview.dueDate), 1))))) { 
         const sixtyDayFollowUpDesc = "Conduct Follow-up Progress Review (60 days after 1st)";
         const sixtyDayFollowUpExpectedDueDate = thirtyDayReview.dueDate ? addDays(startOfDay(new Date(thirtyDayReview.dueDate)), 60) : addDays(startOfDay(clientDateAdded), 30 + 60);
@@ -192,13 +138,12 @@ export default function ClientDetailPage() {
         MOCK_TODO_TASKS_DB[currentClient.id] = [...updatedTasks];
     }
     return updatedTasks;
-  }, [user, toast]);
+  }, [user, toast, ADMIN_USER_ID, ADMIN_USER_NAME, ALL_CLINICIANS_AND_ADMINS_FOR_SELECTION]);
 
 
   useEffect(() => {
     if (clientId && user) {
       setDataLoading(true);
-      // Simulate fetching data
       setTimeout(() => {
         const foundClient = MOCK_CLIENTS_DB[clientId];
         const clientSessions = (MOCK_SESSIONS_DB[clientId] || []).map(s => ({...s, attachments: s.attachments || []}));
@@ -240,17 +185,16 @@ export default function ClientDetailPage() {
     if (!user || !client) return;
     
     const manuallyAssignedUserIds = new Set(assignedToUserIdsInput || []);
-     // Ensure Admin is always assigned
     manuallyAssignedUserIds.add(ADMIN_USER_ID);
 
-    if (manuallyAssignedUserIds.size === 0) { // Should be caught by ToDoList form validation, but double check
+    if (manuallyAssignedUserIds.size === 0) {
         toast({ title: "Assignee Required", description: "A task must be assigned to at least one team member.", variant: "destructive"});
         return;
     }
 
     const finalAssignedUserIds = Array.from(manuallyAssignedUserIds);
     const finalAssignedUserNames = finalAssignedUserIds.map(id => {
-        const assignee = MOCK_ALL_CLINICIANS_FOR_SELECTION.find(c => c.id === id);
+        const assignee = ALL_CLINICIANS_AND_ADMINS_FOR_SELECTION.find(c => c.id === id);
         return assignee?.name || (id === ADMIN_USER_ID ? ADMIN_USER_NAME : 'Unknown User');
     });
 
@@ -327,11 +271,10 @@ export default function ClientDetailPage() {
     }
 
     setIsGeneratingReport(true);
-    setGeneratedReport(null); // Clear previous report
-    setIsReportModalOpen(true); // Open modal to show loading state
+    setGeneratedReport(null);
+    setIsReportModalOpen(true);
 
     try {
-      // Format session notes for the AI
       const sessionNotesText = sessions
         .map(s => `Date: ${format(new Date(s.dateOfSession), 'yyyy-MM-dd')}\nClinician: ${s.attendingClinicianName}\nContent: ${s.content.replace(/<[^>]+>/g, ' ')}\n---`)
         .join('\n\n');
@@ -358,7 +301,7 @@ export default function ClientDetailPage() {
     } catch (error) {
       console.error("Error generating progress report:", error);
       toast({ title: "Report Generation Failed", description: (error as Error).message || "Could not generate the report. Please try again.", variant: "destructive" });
-      setIsReportModalOpen(false); // Close modal on hard failure
+      setIsReportModalOpen(false);
     } finally {
       setIsGeneratingReport(false);
     }
@@ -374,7 +317,7 @@ export default function ClientDetailPage() {
   const handleAddClinicianToTeam = () => {
     if (!client || !selectedClinicianToAdd) return;
     if (client.teamMemberIds?.includes(selectedClinicianToAdd)) {
-        toast({ title: "Clinician already on team", description: `${MOCK_ALL_CLINICIANS_FOR_SELECTION.find(c=>c.id === selectedClinicianToAdd)?.name} is already on this team.`, variant: "default" });
+        toast({ title: "Clinician already on team", description: `${ALL_CLINICIANS_AND_ADMINS_FOR_SELECTION.find(c=>c.id === selectedClinicianToAdd)?.name} is already on this team.`, variant: "default" });
         return;
     }
     const updatedClient = {
@@ -383,13 +326,13 @@ export default function ClientDetailPage() {
     };
     setClient(updatedClient);
     MOCK_CLIENTS_DB[client.id] = updatedClient; 
-    toast({ title: "Clinician Added", description: `${MOCK_ALL_CLINICIANS_FOR_SELECTION.find(c=>c.id === selectedClinicianToAdd)?.name} has been added to Team ${client.name}.`, variant: "default" });
+    toast({ title: "Clinician Added", description: `${ALL_CLINICIANS_AND_ADMINS_FOR_SELECTION.find(c=>c.id === selectedClinicianToAdd)?.name} has been added to Team ${client.name}.`, variant: "default" });
     setSelectedClinicianToAdd('');
   };
 
   const handleRemoveClinicianFromTeam = (clinicianIdToRemove: string) => {
     if (!client) return;
-    const clinicianName = MOCK_ALL_CLINICIANS_FOR_SELECTION.find(c => c.id === clinicianIdToRemove)?.name || 'The clinician';
+    const clinicianName = ALL_CLINICIANS_AND_ADMINS_FOR_SELECTION.find(c => c.id === clinicianIdToRemove)?.name || 'The clinician';
     const updatedClient = {
       ...client,
       teamMemberIds: (client.teamMemberIds || []).filter(id => id !== clinicianIdToRemove),
@@ -425,12 +368,12 @@ export default function ClientDetailPage() {
     );
   }
 
-  const availableCliniciansToAdd = MOCK_ALL_CLINICIANS_FOR_SELECTION.filter(
-    c => !client.teamMemberIds?.includes(c.id) && c.role === 'Clinician' // Only show clinicians for adding to team
+  const availableCliniciansToAdd = ALL_CLINICIANS_AND_ADMINS_FOR_SELECTION.filter(
+    c => !client.teamMemberIds?.includes(c.id) && c.role === 'Clinician'
   );
 
-  const teamMembersForAssignment = MOCK_ALL_CLINICIANS_FOR_SELECTION.filter(
-    c => client.teamMemberIds?.includes(c.id) || c.id === ADMIN_USER_ID // Include Admin for assignment
+  const teamMembersForAssignment = ALL_CLINICIANS_AND_ADMINS_FOR_SELECTION.filter(
+    c => client.teamMemberIds?.includes(c.id) || c.id === ADMIN_USER_ID
   ).map(c => ({ id: c.id, name: c.name }));
 
 
@@ -471,8 +414,8 @@ export default function ClientDetailPage() {
           {client.teamMemberIds && client.teamMemberIds.length > 0 ? (
             <ul className="space-y-3">
               {client.teamMemberIds.map(memberId => {
-                const member = MOCK_ALL_CLINICIANS_FOR_SELECTION.find(u => u.id === memberId) ; 
-                if (!member) return null; // Only show clinicians who are part of the selection list
+                const member = ALL_CLINICIANS_AND_ADMINS_FOR_SELECTION.find(u => u.id === memberId) ; 
+                if (!member) return null;
                 return (
                   <li key={memberId} className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg hover:bg-secondary/60 transition-colors">
                     <div className="flex items-center gap-3">
@@ -571,4 +514,3 @@ export default function ClientDetailPage() {
     </div>
   );
 }
-

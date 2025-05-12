@@ -8,18 +8,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import NotificationItem from '@/components/notifications/NotificationItem';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BellRing, PlusCircle, CheckCircle, Edit, Trash2 } from 'lucide-react'; // Added Edit, Trash2
+import { BellRing, PlusCircle, CheckCircle, Edit, Trash2 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from '@/hooks/use-toast';
-
-// Mock notifications data
-const MOCK_NOTIFICATIONS_DATA: Notification[] = [
-  { id: 'notif-1', type: 'admin_broadcast', title: 'System Maintenance Scheduled', content: 'LWV CLINIC E-DOC will be undergoing scheduled maintenance on Sunday at 2 AM for approximately 1 hour.', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), read: false },
-  { id: 'notif-2', type: 'team_alert', title: 'New Client "Alice Johnson" Assigned', content: 'You have been added to the team for client Alice Johnson. Please review their profile.', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), read: true, recipientUserIds: ['user_clinician'], relatedLink: '/clients/client-3' },
-  { id: 'notif-3', type: 'system_update', title: 'Session Note Updated', content: 'Casey Clinician updated a session note for John Doe.', timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), read: false, recipientUserIds: ['user_admin'], relatedLink: '/clients/client-1' },
-  { id: 'notif-4', type: 'admin_broadcast', title: 'Welcome to LWV CLINIC E-DOC!', content: 'We are excited to have you on board. Explore the features and let us know if you have any questions.', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), read: true },
-  { id: 'notif-5', type: 'team_alert', title: 'Client "Bob Williams" Progress Review', content: 'A progress review meeting for Bob Williams is scheduled for next Tuesday. Please prepare your notes.', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), read: false, recipientUserIds: ['user_clinician', 'user_clinician2'], relatedLink: '/clients/client-4' },
-];
+import { MOCK_NOTIFICATIONS_DATA } from '@/lib/mockDatabase';
 
 
 export default function NotificationsPage() {
@@ -34,10 +26,8 @@ export default function NotificationsPage() {
     if (user) {
       let userNotifications;
       if (isSuperAdminView) {
-        // Super Admin sees all notifications, sorted by timestamp
         userNotifications = MOCK_NOTIFICATIONS_DATA.slice().sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       } else {
-        // Other users see notifications relevant to them
         userNotifications = MOCK_NOTIFICATIONS_DATA.filter(n => {
           if (n.type === 'admin_broadcast') return true;
           return n.recipientUserIds?.includes(user.id) || !n.recipientUserIds;
@@ -49,7 +39,6 @@ export default function NotificationsPage() {
 
   const handleMarkAsRead = (id: string) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-    // Persist this change to MOCK_NOTIFICATIONS_DATA for Super Admin view consistency
     const mockIndex = MOCK_NOTIFICATIONS_DATA.findIndex(n => n.id === id);
     if (mockIndex !== -1) MOCK_NOTIFICATIONS_DATA[mockIndex].read = true;
     toast({ title: "Notification marked as read."});
@@ -57,7 +46,6 @@ export default function NotificationsPage() {
   
   const handleMarkAllAsRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    // Persist this change to MOCK_NOTIFICATIONS_DATA
     MOCK_NOTIFICATIONS_DATA.forEach(n => {
         if (isSuperAdminView || n.type === 'admin_broadcast' || n.recipientUserIds?.includes(user!.id) || !n.recipientUserIds) {
             n.read = true;
@@ -68,7 +56,6 @@ export default function NotificationsPage() {
 
   const handleArchiveNotification = (id: string) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
-    // Also remove from the MOCK_NOTIFICATIONS_DATA if Super Admin is deleting
     const mockIndex = MOCK_NOTIFICATIONS_DATA.findIndex(n => n.id === id);
     if (mockIndex !== -1) {
         MOCK_NOTIFICATIONS_DATA.splice(mockIndex, 1);
@@ -77,7 +64,6 @@ export default function NotificationsPage() {
   };
 
   const handleEditNotification = (id: string) => {
-    // In a real app, this would open an editor modal/form for the notification
     const notificationToEdit = MOCK_NOTIFICATIONS_DATA.find(n => n.id === id);
     toast({ 
         title: "Edit Action (Mock)", 
@@ -170,4 +156,3 @@ export default function NotificationsPage() {
     </div>
   );
 }
-

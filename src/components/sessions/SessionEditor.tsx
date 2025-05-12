@@ -3,15 +3,13 @@
 
 import { useState, useEffect, FormEvent } from 'react';
 import type { User, SessionNote, Attachment } from '@/lib/types';
-// import { expandShorthand } from '@/ai/flows/expand-shorthand'; // Removed as per rich text editor integration
+import RichTextEditor from '@/components/shared/RichTextEditor'; 
 import { Button } from '@/components/ui/button';
-// import { Textarea } from '@/components/ui/textarea'; // Replaced with RichTextEditor
-import RichTextEditor from '@/components/shared/RichTextEditor'; // Import RichTextEditor
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Save, Ban, Paperclip, Trash2, FileText } from 'lucide-react'; // Wand2 removed
+import { Loader2, Save, Ban, Paperclip, Trash2, FileText } from 'lucide-react'; 
 import { format } from 'date-fns';
 import {
   Select,
@@ -20,6 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { MOCK_FILE_TEMPLATES } from '@/lib/mockDatabase';
+
 
 interface SessionEditorProps {
   clientId: string;
@@ -27,17 +27,8 @@ interface SessionEditorProps {
   onSave: (sessionData: Omit<SessionNote, 'id' | 'sessionNumber' | 'createdAt' | 'updatedAt'>) => void;
   onCancel: () => void;
   existingSessionsCount: number;
-  initialData?: Partial<SessionNote>; // For editing existing notes
+  initialData?: Partial<SessionNote>; 
 }
-
-const MOCK_FILE_TEMPLATES: Omit<Attachment, 'id' | 'url'>[] = [
-  { name: "Progress Report Q3.pdf", mimeType: "application/pdf", fileType: "pdf" },
-  { name: "Client Intake Form.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", fileType: "document" },
-  { name: "Exercise Plan.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileType: "spreadsheet" },
-  { name: "Posture Analysis.jpg", mimeType: "image/jpeg", fileType: "image" },
-  { name: "Range of Motion.mp4", mimeType: "video/mp4", fileType: "video" },
-  { name: "Presentation Summary.pptx", mimeType: "application/vnd.openxmlformats-officedocument.presentationml.presentation", fileType: "presentation" },
-];
 
 
 export default function SessionEditor({
@@ -51,7 +42,6 @@ export default function SessionEditor({
   const [dateOfSession, setDateOfSession] = useState(initialData?.dateOfSession ? format(new Date(initialData.dateOfSession), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"));
   const [content, setContent] = useState(initialData?.content || '');
   const [attachments, setAttachments] = useState<Attachment[]>(initialData?.attachments || []);
-  // const [isExpanding, setIsExpanding] = useState(false); // Removed as AI shorthand expander is removed
   const [isSaving, setIsSaving] = useState(false);
   const [selectedMockFileIndex, setSelectedMockFileIndex] = useState<string>("");
   const { toast } = useToast();
@@ -63,24 +53,6 @@ export default function SessionEditor({
       setAttachments(initialData.attachments || []);
     }
   }, [initialData]);
-
-  // const handleExpandShorthand = async () => { // Removed
-  //   if (!content.trim()) {
-  //     toast({ title: "Shorthand is empty", description: "Please type some notes to expand.", variant: "default" });
-  //     return;
-  //   }
-  //   setIsExpanding(true);
-  //   try {
-  //     const result = await expandShorthand({ shorthandText: content });
-  //     setContent(result.expandedText);
-  //     toast({ title: "Shorthand Expanded", description: "Your notes have been expanded.", variant: "default" });
-  //   } catch (error) {
-  //     console.error("Error expanding shorthand:", error);
-  //     toast({ title: "Expansion Failed", description: "Could not expand shorthand. Please try again.", variant: "destructive" });
-  //   } finally {
-  //     setIsExpanding(false);
-  //   }
-  // };
 
   const handleAddAttachment = () => {
     if (selectedMockFileIndex === "") {
@@ -127,7 +99,7 @@ export default function SessionEditor({
     };
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate save
+      await new Promise(resolve => setTimeout(resolve, 500)); 
       onSave(sessionData);
       toast({ title: "Session Saved", description: `Session ${initialData ? 'updated' : 'added'} successfully.`, variant: "default" });
     } catch (error) {
@@ -184,26 +156,8 @@ export default function SessionEditor({
               onChange={setContent}
               placeholder="Enter session notes here..."
             />
-             {/* <p className="text-xs text-muted-foreground">Use the button below to expand shorthand. For rich text, you can manually type HTML tags (e.g., &lt;b&gt;bold&lt;/b&gt;, &lt;ul&gt;&lt;li&gt;item&lt;/li&gt;&lt;/ul&gt;).</p> */}
           </div>
           
-          {/* AI Shorthand Button Removed
-          <Button
-            type="button"
-            onClick={handleExpandShorthand}
-            disabled={isExpanding || !content.trim()}
-            variant="outline"
-            className="w-full sm:w-auto"
-          >
-            {isExpanding ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Wand2 className="mr-2 h-4 w-4" />
-            )}
-            Expand Shorthand
-          </Button>
-          */}
-
           <div className="space-y-4">
             <Label>Attachments</Label>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -247,7 +201,7 @@ export default function SessionEditor({
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSaving}>
             <Ban className="mr-2 h-4 w-4" /> Cancel
           </Button>
-          <Button type="submit" disabled={isSaving /*|| isExpanding*/}>
+          <Button type="submit" disabled={isSaving}>
             {isSaving ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
