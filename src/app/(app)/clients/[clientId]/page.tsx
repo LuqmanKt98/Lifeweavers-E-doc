@@ -52,12 +52,13 @@ const MOCK_ALL_CLINICIANS_FOR_SELECTION: User[] = [
   { id: 'user_clinician', email: 'clinician@lifeweaver.com', name: 'Casey Clinician', role: 'Clinician', vocation: 'Physiotherapist' },
   { id: 'user_clinician2', email: 'clinician2@lifeweaver.com', name: 'Jamie Therapist', role: 'Clinician', vocation: 'Occupational Therapist' },
   { id: 'user_new1', email: 'new.user1@example.com', name: 'Taylor New', role: 'Clinician', vocation: 'Speech Therapist' },
+  { id: 'user_admin', email: 'admin@lifeweaver.com', name: 'Alex Admin', role: 'Admin', vocation: 'Clinic Manager' }, // Added Admin here
 ];
 
 // Mock DB for ToDo Tasks
 let MOCK_TODO_TASKS_DB: Record<string, ToDoTask[]> = {
     'client-1': [
-        { id: 'todo-1-1', clientId: 'client-1', description: 'Follow up on home exercise plan adherence.', isDone: false, createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), addedByUserId: 'user_clinician', addedByUserName: 'Casey Clinician', assignedToUserIds: ['user_clinician'], assignedToUserNames: ['Casey Clinician'], dueDate: format(addDays(new Date(), 5), 'yyyy-MM-dd') },
+        { id: 'todo-1-1', clientId: 'client-1', description: 'Follow up on home exercise plan adherence.', isDone: false, createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), addedByUserId: 'user_clinician', addedByUserName: 'Casey Clinician', assignedToUserIds: ['user_clinician', 'user_admin'], assignedToUserNames: ['Casey Clinician', 'Alex Admin'], dueDate: format(addDays(new Date(), 5), 'yyyy-MM-dd') },
         { id: 'todo-1-2', clientId: 'client-1', description: 'Schedule next appointment.', isDone: true, createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), addedByUserId: 'user_admin', addedByUserName: 'Alex Admin', assignedToUserIds: ['user_admin'], assignedToUserNames: ['Alex Admin'], completedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), completedByUserId: 'user_admin', completedByUserName: 'Alex Admin' },
     ],
     'client-6': [ // Client added >30 days ago
@@ -67,8 +68,8 @@ let MOCK_TODO_TASKS_DB: Record<string, ToDoTask[]> = {
             isDone: true, 
             createdAt: MOCK_CLIENTS_DB['client-6'].dateAdded, 
             addedByUserId: 'system', addedByUserName: 'System', 
-            assignedToUserIds: ['user_clinician'], 
-            assignedToUserNames: ['Casey Clinician'],
+            assignedToUserIds: ['user_clinician', 'user_admin'], 
+            assignedToUserNames: ['Casey Clinician', 'Alex Admin'],
             dueDate: format(addDays(new Date(MOCK_CLIENTS_DB['client-6'].dateAdded), 30), 'yyyy-MM-dd'),
             isSystemGenerated: true,
             completedAt: format(addDays(new Date(MOCK_CLIENTS_DB['client-6'].dateAdded), 28), 'yyyy-MM-dd'), 
@@ -77,6 +78,9 @@ let MOCK_TODO_TASKS_DB: Record<string, ToDoTask[]> = {
         }
     ]
 };
+
+const ADMIN_USER_ID = 'user_admin';
+const ADMIN_USER_NAME = 'Alex Admin';
 
 
 export default function ClientDetailPage() {
@@ -108,12 +112,14 @@ export default function ClientDetailPage() {
 
     const clientDateAdded = new Date(currentClient.dateAdded);
     
-    const getFirstTeamMember = (): Pick<User, 'id' | 'name'> | undefined => {
+    const getFirstTeamMemberOrAdmin = (): Pick<User, 'id' | 'name'> => {
         if (currentClient.teamMemberIds && currentClient.teamMemberIds.length > 0) {
             const firstMemberId = currentClient.teamMemberIds[0];
-            return MOCK_ALL_CLINICIANS_FOR_SELECTION.find(c => c.id === firstMemberId);
+            const member = MOCK_ALL_CLINICIANS_FOR_SELECTION.find(c => c.id === firstMemberId);
+            if (member) return member;
         }
-        return undefined;
+        // Default to Admin if no team members or first member not found
+        return MOCK_ALL_CLINICIANS_FOR_SELECTION.find(c => c.id === ADMIN_USER_ID) || {id: ADMIN_USER_ID, name: ADMIN_USER_NAME};
     };
 
 
@@ -122,7 +128,11 @@ export default function ClientDetailPage() {
     let thirtyDayReview = updatedTasks.find(task => task.description === thirtyDayReviewDesc && task.isSystemGenerated);
     if (!thirtyDayReview) {
       const dueDate30 = format(addDays(startOfDay(clientDateAdded), 30), 'yyyy-MM-dd');
-      const firstTeamMember = getFirstTeamMember();
+      const assignedMember = getFirstTeamMemberOrAdmin();
+      
+      const assignedIds = new Set([assignedMember.id, ADMIN_USER_ID]);
+      const assignedNames = new Set([assignedMember.name, ADMIN_USER_NAME]);
+      
       thirtyDayReview = {
         id: `sys-${currentClient.id}-30day-${Date.now()}`,
         clientId: currentClient.id,
@@ -131,14 +141,14 @@ export default function ClientDetailPage() {
         createdAt: new Date().toISOString(),
         addedByUserId: 'system',
         addedByUserName: 'System',
-        assignedToUserIds: firstTeamMember ? [firstTeamMember.id] : [],
-        assignedToUserNames: firstTeamMember ? [firstTeamMember.name] : [],
+        assignedToUserIds: Array.from(assignedIds),
+        assignedToUserNames: Array.from(assignedNames),
         dueDate: dueDate30,
         isSystemGenerated: true,
       };
       updatedTasks.push(thirtyDayReview);
       changesMade = true;
-      const assigneeText = firstTeamMember ? `Assigned to ${firstTeamMember.name}.` : 'Not assigned (no team members).';
+      const assigneeText = `Assigned to ${Array.from(assignedNames).join(', ')}.`;
       toast({ title: "System Task Added", description: `"${thirtyDayReviewDesc}" scheduled. ${assigneeText}`, variant: "default" });
     }
 
@@ -154,7 +164,10 @@ export default function ClientDetailPage() {
         );
 
         if (!existingSixtyDayReview) {
-            const firstTeamMember = getFirstTeamMember();
+            const assignedMember = getFirstTeamMemberOrAdmin();
+            const assignedIds = new Set([assignedMember.id, ADMIN_USER_ID]);
+            const assignedNames = new Set([assignedMember.name, ADMIN_USER_NAME]);
+
             const newSixtyDayReview: ToDoTask = {
                 id: `sys-${currentClient.id}-60day-${Date.now()}`,
                 clientId: currentClient.id,
@@ -163,14 +176,14 @@ export default function ClientDetailPage() {
                 createdAt: new Date().toISOString(),
                 addedByUserId: 'system',
                 addedByUserName: 'System',
-                assignedToUserIds: firstTeamMember ? [firstTeamMember.id] : [],
-                assignedToUserNames: firstTeamMember ? [firstTeamMember.name] : [],
+                assignedToUserIds: Array.from(assignedIds),
+                assignedToUserNames: Array.from(assignedNames),
                 dueDate: format(sixtyDayFollowUpExpectedDueDate, 'yyyy-MM-dd'),
                 isSystemGenerated: true,
             };
             updatedTasks.push(newSixtyDayReview);
             changesMade = true;
-            const assigneeText = firstTeamMember ? `Assigned to ${firstTeamMember.name}.` : 'Not assigned (no team members).';
+            const assigneeText = `Assigned to ${Array.from(assignedNames).join(', ')}.`;
             toast({ title: "System Task Added", description: `"${sixtyDayFollowUpDesc}" scheduled. ${assigneeText}`, variant: "default" });
         }
     }
@@ -226,15 +239,19 @@ export default function ClientDetailPage() {
   const handleAddToDoTask = (description: string, dueDate?: string, assignedToUserIdsInput?: string[]) => {
     if (!user || !client) return;
     
-    const assignedToUserIds = assignedToUserIdsInput || [];
-    if (assignedToUserIds.length === 0) { // Should be caught by ToDoList form validation, but double check
+    const manuallyAssignedUserIds = new Set(assignedToUserIdsInput || []);
+     // Ensure Admin is always assigned
+    manuallyAssignedUserIds.add(ADMIN_USER_ID);
+
+    if (manuallyAssignedUserIds.size === 0) { // Should be caught by ToDoList form validation, but double check
         toast({ title: "Assignee Required", description: "A task must be assigned to at least one team member.", variant: "destructive"});
         return;
     }
 
-    const assignedToUserNames = assignedToUserIds.map(id => {
+    const finalAssignedUserIds = Array.from(manuallyAssignedUserIds);
+    const finalAssignedUserNames = finalAssignedUserIds.map(id => {
         const assignee = MOCK_ALL_CLINICIANS_FOR_SELECTION.find(c => c.id === id);
-        return assignee?.name || 'Unknown User';
+        return assignee?.name || (id === ADMIN_USER_ID ? ADMIN_USER_NAME : 'Unknown User');
     });
 
     const newTask: ToDoTask = {
@@ -245,15 +262,15 @@ export default function ClientDetailPage() {
       createdAt: new Date().toISOString(),
       addedByUserId: user.id,
       addedByUserName: user.name,
-      assignedToUserIds: assignedToUserIds,
-      assignedToUserNames: assignedToUserNames,
+      assignedToUserIds: finalAssignedUserIds,
+      assignedToUserNames: finalAssignedUserNames,
       dueDate: dueDate ? format(startOfDay(new Date(dueDate)), 'yyyy-MM-dd') : undefined,
       isSystemGenerated: false,
     };
     const updatedTasks = [...todoTasks, newTask];
     setTodoTasks(updatedTasks);
     MOCK_TODO_TASKS_DB[client.id] = updatedTasks;
-    const assigneeText = assignedToUserNames.length > 0 ? `Assigned to ${assignedToUserNames.join(', ')}.` : 'Unassigned.';
+    const assigneeText = finalAssignedUserNames.length > 0 ? `Assigned to ${finalAssignedUserNames.join(', ')}.` : 'Unassigned.';
     toast({ title: "Task Added", description: `"${description}" has been added. ${assigneeText}` });
   };
 
@@ -409,11 +426,11 @@ export default function ClientDetailPage() {
   }
 
   const availableCliniciansToAdd = MOCK_ALL_CLINICIANS_FOR_SELECTION.filter(
-    c => !client.teamMemberIds?.includes(c.id)
+    c => !client.teamMemberIds?.includes(c.id) && c.role === 'Clinician' // Only show clinicians for adding to team
   );
 
   const teamMembersForAssignment = MOCK_ALL_CLINICIANS_FOR_SELECTION.filter(
-    c => client.teamMemberIds?.includes(c.id)
+    c => client.teamMemberIds?.includes(c.id) || c.id === ADMIN_USER_ID // Include Admin for assignment
   ).map(c => ({ id: c.id, name: c.name }));
 
 
@@ -454,8 +471,8 @@ export default function ClientDetailPage() {
           {client.teamMemberIds && client.teamMemberIds.length > 0 ? (
             <ul className="space-y-3">
               {client.teamMemberIds.map(memberId => {
-                const member = MOCK_ALL_CLINICIANS_FOR_SELECTION.find(u => u.id === memberId) || MOCK_CLIENTS_DB[memberId] ; 
-                if (!member) return null;
+                const member = MOCK_ALL_CLINICIANS_FOR_SELECTION.find(u => u.id === memberId) ; 
+                if (!member) return null; // Only show clinicians who are part of the selection list
                 return (
                   <li key={memberId} className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg hover:bg-secondary/60 transition-colors">
                     <div className="flex items-center gap-3">

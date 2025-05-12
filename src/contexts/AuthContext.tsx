@@ -8,7 +8,7 @@ import { useRouter, usePathname } from 'next/navigation';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, role: UserRole) => Promise<void>; // Simplified login
+  login: (email: string) => Promise<void>; // Simplified login, role removed as it's derived
   logout: () => Promise<void>;
 }
 
@@ -20,6 +20,8 @@ const MOCK_USERS: Record<string, User> = {
   'admin@lifeweaver.com': { id: 'user_admin', email: 'admin@lifeweaver.com', name: 'Alex Admin', role: 'Admin', vocation: 'Clinic Manager' },
   'clinician@lifeweaver.com': { id: 'user_clinician', email: 'clinician@lifeweaver.com', name: 'Casey Clinician', role: 'Clinician', vocation: 'Physiotherapist' },
   'clinician2@lifeweaver.com': { id: 'user_clinician2', email: 'clinician2@lifeweaver.com', name: 'Jamie Therapist', role: 'Clinician', vocation: 'Occupational Therapist' },
+  // 'user_new1' and other specific clinicians used for team assignment are not listed here for direct login
+  // but will be available in MOCK_ALL_CLINICIANS_FOR_SELECTION on relevant pages.
 };
 
 
@@ -61,15 +63,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const defaultClinicianUser: User = {
         id: `user_${Date.now()}`,
         email: email,
-        name: email.split('@')[0],
+        name: email.split('@')[0], // Basic name from email prefix
         role: 'Clinician',
-        vocation: 'Therapist'
+        vocation: 'Therapist' // Default vocation
       };
       setUser(defaultClinicianUser);
       localStorage.setItem('lifeweaver_user', JSON.stringify(defaultClinicianUser));
       router.push('/dashboard');
       // In a real app, you would throw an error here or handle unknown users appropriately
-      // throw new Error("User not found or invalid credentials");
+      // For example: toast({ title: "Login Failed", description: "User not found.", variant: "destructive" });
     }
     setLoading(false);
   };
