@@ -8,9 +8,9 @@ import type { Client } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { Home, Users, Settings, ChevronLeft, ChevronRight, PlusCircle, Bell, MessageSquare } from 'lucide-react';
+import { Home, Users, Settings, ChevronLeft, ChevronRight, PlusCircle, Bell, MessageSquare, LifeBuoy } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import Logo from '@/components/Logo'; // Import the new Logo component
+// import Logo from '@/components/Logo'; // Logo component removed
 
 interface AppSidebarProps {
   clients: Client[];
@@ -60,14 +60,16 @@ export default function AppSidebar({ clients, isOpen, toggleSidebar }: AppSideba
         )}
       >
         <div className={cn("flex items-center border-b border-sidebar-border px-4", isOpen ? "h-16 justify-between" : "h-16 justify-center")}>
-          <Link href="/dashboard" className={cn("flex items-center gap-2 group", !isOpen && "justify-center")}>
-             <Logo 
-                iconOnly={!isOpen} 
-                width={isOpen ? 150 : 32} 
-                height={isOpen ? 37.5 : 32} 
-                className={cn("transition-all duration-300", isOpen ? "h-auto max-w-[150px]" : "h-8 w-8")} 
-             />
-          </Link>
+          {/* Logo removed from here */}
+          {isOpen ? (
+             <Link href="/dashboard" className="font-bold text-lg text-sidebar-primary hover:text-sidebar-primary/80 transition-colors">
+                LWV CLINIC E-DOC
+             </Link>
+          ) : (
+            <Link href="/dashboard" className="text-sidebar-primary hover:text-sidebar-primary/80 transition-colors">
+              <LifeBuoy className="h-7 w-7"/> {/* Placeholder icon if sidebar is collapsed and no logo */}
+            </Link>
+          )}
           {isOpen && (
             <Button variant="ghost" size="icon" onClick={toggleSidebar} className="md:hidden">
               <ChevronLeft className="h-6 w-6" />
@@ -135,3 +137,4 @@ export default function AppSidebar({ clients, isOpen, toggleSidebar }: AppSideba
     </>
   );
 }
+

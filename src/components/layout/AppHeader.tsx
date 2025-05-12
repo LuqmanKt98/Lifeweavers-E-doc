@@ -15,9 +15,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { LogOut, UserCircle, Settings, Moon, Sun, Menu, X } from 'lucide-react';
-import Link from 'next/link';
+// import Link from 'next/link'; // Link removed as Logo is removed
 import { useTheme } from "next-themes";
-import Logo from '@/components/Logo'; // Import the new Logo component
+// import Logo from '@/components/Logo'; // Logo component removed
 
 interface AppHeaderProps {
   user: User;
@@ -42,13 +42,11 @@ export default function AppHeader({ user, toggleSidebar, sidebarOpen, pageTitle 
         <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-1 md:hidden flex-shrink-0">
           {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </Button>
-         <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-1 hidden md:inline-flex flex-shrink-0">
+         <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-2 hidden md:inline-flex flex-shrink-0"> {/* Increased margin slightly */}
           <Menu className="h-6 w-6" />
         </Button>
-        <Link href="/dashboard" className="flex items-center flex-shrink-0 mr-2">
-           <Logo iconOnly width={32} height={32} className="h-8 w-8" /> {/* Changed w-auto to w-8 */}
-        </Link>
-        <h1 className="text-xl font-semibold text-foreground truncate"> {/* Removed hidden sm:block */}
+        {/* Logo removed from here */}
+        <h1 className="text-xl font-semibold text-foreground truncate">
           {pageTitle}
         </h1>
       </div>
@@ -101,3 +99,4 @@ export default function AppHeader({ user, toggleSidebar, sidebarOpen, pageTitle 
     </header>
   );
 }
+
