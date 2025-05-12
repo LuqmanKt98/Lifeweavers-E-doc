@@ -6,11 +6,12 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppSidebar from '@/components/layout/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
-import type { SpecialNotification, SessionNote } from '@/lib/types';
+import type { SpecialNotification } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import SpecialNotificationBanner from '@/components/layout/SpecialNotificationBanner';
-import EventCalendar from '@/components/shared/EventCalendar';
-import { MOCK_CLIENTS_DB, MOCK_SESSIONS_DB } from '@/lib/mockDatabase'; 
+// EventCalendar import removed
+import { MOCK_CLIENTS_DB } from '@/lib/mockDatabase'; 
+// MOCK_SESSIONS_DB import removed as calendar is no longer here
 
 // Mock data for special notifications
 const MOCK_SPECIAL_NOTIFICATIONS_DATA: SpecialNotification[] = [
@@ -99,18 +100,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Prepare sessions for EventCalendar based on user role
-  const MOCK_ALL_SESSIONS_ARRAY: SessionNote[] = Object.values(MOCK_SESSIONS_DB).flat();
-  const allProcessedSessions = MOCK_ALL_SESSIONS_ARRAY.map(s => ({...s, attachments: s.attachments || []}));
-
-  let sessionsForCalendarView: SessionNote[];
-  if (user.role === 'Admin' || user.role === 'Super Admin') {
-    sessionsForCalendarView = allProcessedSessions;
-  } else if (user.role === 'Clinician') {
-    sessionsForCalendarView = allProcessedSessions.filter(session => session.attendingClinicianId === user.id);
-  } else {
-    sessionsForCalendarView = []; // Default to empty if role doesn't match
-  }
+  // Prepare sessions for EventCalendar logic removed from here
 
   return (
     <div className="flex h-screen bg-secondary/50">
@@ -120,7 +110,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <main className="flex-1 overflow-y-auto">
           <ScrollArea className="h-full">
             <div className="p-4 md:p-6 lg:p-8 space-y-6">
-             <EventCalendar sessions={sessionsForCalendarView} />
+             {/* EventCalendar rendering removed from here */}
              {children}
             </div>
           </ScrollArea>

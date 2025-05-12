@@ -11,7 +11,7 @@ import { ShieldCheck, UserCog, MessagesSquare, ListChecks } from 'lucide-react';
 interface SuperAdminDashboardProps {
   user: User;
   recentSessions: SessionNote[];
-  // allSessions prop removed
+  // allSessions prop (if any for calendar) removed, handled by DashboardPage
   clients: Client[];
   team: User[];
 }

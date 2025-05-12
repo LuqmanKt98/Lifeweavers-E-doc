@@ -8,12 +8,12 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Users, FileText, Briefcase, Clock, ArrowRight, Activity } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
-// EventCalendar import removed as it's now in AppLayout
+// EventCalendar import removed as it's now in DashboardPage
 
 interface AdminDashboardProps {
   user: User;
   recentSessions: SessionNote[]; // For the list of recent sessions
-  // allSessions prop removed
+  // allSessions prop (if any for calendar) removed, handled by DashboardPage
   clients: Client[];
   team: User[];
 }

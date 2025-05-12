@@ -1,7 +1,7 @@
 // src/components/dashboards/ClinicianDashboard.tsx
 "use client";
 
-import type { User, Client, SessionNote } from '@/lib/types';
+import type { User, Client } from '@/lib/types'; // SessionNote import removed
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
@@ -14,7 +14,7 @@ interface ClinicianDashboardProps {
   user: User;
   clients: Client[];
   team: User[];
-  // sessions prop removed
+  // sessions prop (if any for calendar) removed, handled by DashboardPage
 }
 
 export default function ClinicianDashboard({ user, clients, team }: ClinicianDashboardProps) {

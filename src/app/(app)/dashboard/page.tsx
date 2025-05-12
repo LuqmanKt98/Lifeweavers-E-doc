@@ -9,12 +9,15 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import type { Client, SessionNote, User } from '@/lib/types';
 import { Lightbulb } from 'lucide-react';
 import { MOCK_CLIENTS_DB, MOCK_SESSIONS_DB, MOCK_ALL_USERS_DATABASE } from '@/lib/mockDatabase';
+import EventCalendar from '@/components/shared/EventCalendar'; // Added EventCalendar import
 
 // Convert MOCK_CLIENTS_DB (object) to array for dashboard use
 const MOCK_CLIENTS_ARRAY: Client[] = Object.values(MOCK_CLIENTS_DB);
 
 // Convert MOCK_SESSIONS_DB (object of arrays) to a flat array of all sessions
 const MOCK_ALL_SESSIONS_ARRAY: SessionNote[] = Object.values(MOCK_SESSIONS_DB).flat();
+const ALL_PROCESSED_SESSIONS_FOR_CALENDAR = MOCK_ALL_SESSIONS_ARRAY.map(s => ({...s, attachments: s.attachments || []}));
+
 
 // Use MOCK_ALL_USERS_DATABASE for team information
 const MOCK_TEAM_ARRAY: User[] = MOCK_ALL_USERS_DATABASE;
@@ -40,6 +43,16 @@ export default function DashboardPage() {
     .slice()
     .sort((a,b) => new Date(b.dateOfSession).getTime() - new Date(a.dateOfSession).getTime());
 
+  // Prepare sessions for EventCalendar based on user role
+  let sessionsForCalendarView: SessionNote[];
+  if (user.role === 'Admin' || user.role === 'Super Admin') {
+    sessionsForCalendarView = ALL_PROCESSED_SESSIONS_FOR_CALENDAR;
+  } else if (user.role === 'Clinician') {
+    sessionsForCalendarView = ALL_PROCESSED_SESSIONS_FOR_CALENDAR.filter(session => session.attendingClinicianId === user.id);
+  } else {
+    sessionsForCalendarView = []; // Default to empty if role doesn't match
+  }
+
 
   const renderDashboard = () => {
     switch (user.role) {
@@ -47,13 +60,13 @@ export default function DashboardPage() {
         const clinicianClients = MOCK_CLIENTS_ARRAY.filter(client => 
           client.teamMemberIds?.includes(user.id)
         );
-        // clinicianSessions for calendar is now handled by AppLayout
+        // sessions prop for ClinicianDashboard (if any was intended for calendar) is now handled by sessionsForCalendarView above
         return <ClinicianDashboard user={user} clients={clinicianClients} team={MOCK_TEAM_ARRAY} />;
       case 'Admin':
-        // allDashboardSessions for calendar is now handled by AppLayout
+        // recentSessions is for the list, calendar sessions are handled by sessionsForCalendarView
         return <AdminDashboard user={user} recentSessions={sortedRecentSessions} clients={MOCK_CLIENTS_ARRAY} team={MOCK_TEAM_ARRAY} />;
       case 'Super Admin':
-        // allDashboardSessions for calendar is now handled by AppLayout
+        // recentSessions is for the list, calendar sessions are handled by sessionsForCalendarView
         return <SuperAdminDashboard user={user} recentSessions={sortedRecentSessions} clients={MOCK_CLIENTS_ARRAY} team={MOCK_TEAM_ARRAY} />;
       default:
         return <p>Unknown user role.</p>;
@@ -62,6 +75,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      <EventCalendar sessions={sessionsForCalendarView} /> {/* Moved Calendar here */}
       <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
         <CardHeader>
           <CardTitle className="text-3xl font-bold text-primary">
