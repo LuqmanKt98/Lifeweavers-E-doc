@@ -3,14 +3,15 @@
 
 import { useState, useEffect, FormEvent } from 'react';
 import type { User, SessionNote, Attachment } from '@/lib/types';
-import { expandShorthand } from '@/ai/flows/expand-shorthand';
+// import { expandShorthand } from '@/ai/flows/expand-shorthand'; // Removed as per rich text editor integration
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+// import { Textarea } from '@/components/ui/textarea'; // Replaced with RichTextEditor
+import RichTextEditor from '@/components/shared/RichTextEditor'; // Import RichTextEditor
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Wand2, Loader2, Save, Ban, Paperclip, Trash2, FileText } from 'lucide-react';
+import { Loader2, Save, Ban, Paperclip, Trash2, FileText } from 'lucide-react'; // Wand2 removed
 import { format } from 'date-fns';
 import {
   Select,
@@ -50,7 +51,7 @@ export default function SessionEditor({
   const [dateOfSession, setDateOfSession] = useState(initialData?.dateOfSession ? format(new Date(initialData.dateOfSession), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"));
   const [content, setContent] = useState(initialData?.content || '');
   const [attachments, setAttachments] = useState<Attachment[]>(initialData?.attachments || []);
-  const [isExpanding, setIsExpanding] = useState(false);
+  // const [isExpanding, setIsExpanding] = useState(false); // Removed as AI shorthand expander is removed
   const [isSaving, setIsSaving] = useState(false);
   const [selectedMockFileIndex, setSelectedMockFileIndex] = useState<string>("");
   const { toast } = useToast();
@@ -63,25 +64,23 @@ export default function SessionEditor({
     }
   }, [initialData]);
 
-  const handleExpandShorthand = async () => {
-    if (!content.trim()) {
-      toast({ title: "Shorthand is empty", description: "Please type some notes to expand.", variant: "default" });
-      return;
-    }
-    setIsExpanding(true);
-    try {
-      const result = await expandShorthand({ shorthandText: content });
-      // Preserve existing HTML structure if AI returns plain text. For now, assume AI might return simple HTML or plain text.
-      // A more robust solution would involve parsing and merging, or instructing the AI to preserve/wrap with HTML.
-      setContent(result.expandedText);
-      toast({ title: "Shorthand Expanded", description: "Your notes have been expanded.", variant: "default" });
-    } catch (error) {
-      console.error("Error expanding shorthand:", error);
-      toast({ title: "Expansion Failed", description: "Could not expand shorthand. Please try again.", variant: "destructive" });
-    } finally {
-      setIsExpanding(false);
-    }
-  };
+  // const handleExpandShorthand = async () => { // Removed
+  //   if (!content.trim()) {
+  //     toast({ title: "Shorthand is empty", description: "Please type some notes to expand.", variant: "default" });
+  //     return;
+  //   }
+  //   setIsExpanding(true);
+  //   try {
+  //     const result = await expandShorthand({ shorthandText: content });
+  //     setContent(result.expandedText);
+  //     toast({ title: "Shorthand Expanded", description: "Your notes have been expanded.", variant: "default" });
+  //   } catch (error) {
+  //     console.error("Error expanding shorthand:", error);
+  //     toast({ title: "Expansion Failed", description: "Could not expand shorthand. Please try again.", variant: "destructive" });
+  //   } finally {
+  //     setIsExpanding(false);
+  //   }
+  // };
 
   const handleAddAttachment = () => {
     if (selectedMockFileIndex === "") {
@@ -95,13 +94,12 @@ export default function SessionEditor({
       id: `mock-${Date.now()}-${Math.random().toString(36).substring(7)}`,
       name: fileTemplate.name,
       mimeType: fileTemplate.mimeType,
-      // In a real app, URL would come from file upload/Google Drive.
-      url: `https://picsum.photos/seed/${Date.now()}/600/400`, // Placeholder for previewable files
+      url: `https://picsum.photos/seed/${Date.now()}/600/400`, 
       previewUrl: fileTemplate.fileType === 'image' ? `https://picsum.photos/seed/${Date.now()}/600/400` : undefined,
       fileType: fileTemplate.fileType,
     };
     setAttachments(prev => [...prev, newAttachment]);
-    setSelectedMockFileIndex(""); // Reset select
+    setSelectedMockFileIndex(""); 
     toast({ title: "Mock File Attached", description: `${newAttachment.name} added.`, variant: "default" });
   };
 
@@ -149,7 +147,7 @@ export default function SessionEditor({
       <CardHeader>
         <CardTitle className="text-xl text-primary">{sessionTitle}</CardTitle>
         <CardDescription>
-          The content field below supports HTML for rich text. For a full visual editor, consider integrating a library like Tiptap or React Quill.
+          Use the rich text editor below for formatting session notes. 
           File attachments are currently mocked. Full Google Drive integration would be a backend feature.
         </CardDescription>
       </CardHeader>
@@ -180,18 +178,16 @@ export default function SessionEditor({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="content">Session Notes (Supports HTML)</Label>
-            <Textarea
-              id="content"
-              placeholder="Enter session notes here. You can use shorthand and expand it, or input HTML for rich text formatting..."
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={8}
-              className="min-h-[200px] bg-background text-base"
+            <Label htmlFor="content">Session Notes</Label>
+            <RichTextEditor
+              content={content}
+              onChange={setContent}
+              placeholder="Enter session notes here..."
             />
-             <p className="text-xs text-muted-foreground">Use the button below to expand shorthand. For rich text, you can manually type HTML tags (e.g., &lt;b&gt;bold&lt;/b&gt;, &lt;ul&gt;&lt;li&gt;item&lt;/li&gt;&lt;/ul&gt;).</p>
+             {/* <p className="text-xs text-muted-foreground">Use the button below to expand shorthand. For rich text, you can manually type HTML tags (e.g., &lt;b&gt;bold&lt;/b&gt;, &lt;ul&gt;&lt;li&gt;item&lt;/li&gt;&lt;/ul&gt;).</p> */}
           </div>
           
+          {/* AI Shorthand Button Removed
           <Button
             type="button"
             onClick={handleExpandShorthand}
@@ -206,6 +202,7 @@ export default function SessionEditor({
             )}
             Expand Shorthand
           </Button>
+          */}
 
           <div className="space-y-4">
             <Label>Attachments</Label>
@@ -250,7 +247,7 @@ export default function SessionEditor({
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSaving}>
             <Ban className="mr-2 h-4 w-4" /> Cancel
           </Button>
-          <Button type="submit" disabled={isSaving || isExpanding}>
+          <Button type="submit" disabled={isSaving /*|| isExpanding*/}>
             {isSaving ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
