@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import NotificationItem from '@/components/notifications/NotificationItem';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BellRing, PlusCircle, ListFilter, Archive } from 'lucide-react';
+import { BellRing, PlusCircle, ListFilter, Archive, CheckCircle } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from '@/hooks/use-toast';
 
@@ -132,3 +132,4 @@ export default function NotificationsPage() {
     </div>
   );
 }
+
