@@ -8,24 +8,31 @@ import ToDoItem from './ToDoItem';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { PlusCircle, ListChecks, AlertCircle } from 'lucide-react';
+import { PlusCircle, ListChecks, AlertCircle, ChevronDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Added Select
-import { Label } from '@/components/ui/label'; // Added Label
+import { Label } from '@/components/ui/label';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuItem, // For "No team members" case
+} from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+
 
 interface ToDoListProps {
   clientId: string;
   tasks: ToDoTask[];
   currentUser: User;
-  onAddTask: (description: string, dueDate?: string, assignedToUserId?: string) => void;
+  onAddTask: (description: string, dueDate?: string, assignedToUserIds: string[]) => void;
   onToggleTask: (taskId: string) => void;
   onRemoveTask: (taskId: string) => void;
   canModify: boolean; // General permission to interact (add, toggle)
   canDeleteSystemGenerated: boolean; // Specific permission for SuperAdmin to delete system tasks
   assignableTeamMembers: Pick<User, 'id' | 'name'>[]; // List of users who can be assigned tasks
 }
-
-const UNASSIGNED_TASK_VALUE = "__UNASSIGNED__"; // Specific non-empty string for "Unassigned" option
 
 export default function ToDoList({ 
     clientId, 
@@ -40,16 +47,34 @@ export default function ToDoList({
 }: ToDoListProps) {
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [newTaskDueDate, setNewTaskDueDate] = useState('');
-  const [newTaskAssignedToUserId, setNewTaskAssignedToUserId] = useState<string>(''); // State for selected assignee
+  const [newTaskAssignedToUserIds, setNewTaskAssignedToUserIds] = useState<string[]>([]);
+  const { toast } = useToast();
+
+  const handleAssigneeToggle = (userId: string) => {
+    setNewTaskAssignedToUserIds(prev =>
+        prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
+    );
+  };
+
+  const selectedAssigneeNames = newTaskAssignedToUserIds
+    .map(id => assignableTeamMembers.find(member => member.id === id)?.name)
+    .filter(Boolean) as string[];
 
   const handleSubmitNewTask = (e: FormEvent) => {
     e.preventDefault();
     if (!newTaskDescription.trim()) return;
-    const assigneeId = newTaskAssignedToUserId === UNASSIGNED_TASK_VALUE || newTaskAssignedToUserId === '' ? undefined : newTaskAssignedToUserId;
-    onAddTask(newTaskDescription.trim(), newTaskDueDate || undefined, assigneeId);
+    if (newTaskAssignedToUserIds.length === 0) {
+        toast({
+            title: "Assignee Required",
+            description: "Please select at least one assignee for the task.",
+            variant: "destructive",
+        });
+        return;
+    }
+    onAddTask(newTaskDescription.trim(), newTaskDueDate || undefined, newTaskAssignedToUserIds);
     setNewTaskDescription('');
     setNewTaskDueDate('');
-    setNewTaskAssignedToUserId(''); // Reset assignee to empty string to show placeholder
+    setNewTaskAssignedToUserIds([]); 
   };
 
   const sortedTasks = [...tasks].sort((a, b) => {
@@ -97,23 +122,35 @@ export default function ToDoList({
                     value={newTaskDueDate}
                     onChange={(e) => setNewTaskDueDate(e.target.value)}
                     className="bg-background text-sm"
+                    min={new Date().toISOString().split('T')[0]} // Optional: Prevent past dates
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="newTaskAssignee">Assign To (Optional)</Label>
-                    <Select value={newTaskAssignedToUserId} onValueChange={setNewTaskAssignedToUserId}>
-                        <SelectTrigger id="newTaskAssignee" className="bg-background">
-                            <SelectValue placeholder="Select Assignee" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value={UNASSIGNED_TASK_VALUE}>Unassigned</SelectItem>
-                            {assignableTeamMembers.map(member => (
-                                <SelectItem key={member.id} value={member.id}>
+                    <Label htmlFor="newTaskAssignees">Assign To</Label>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" id="newTaskAssignees" className={cn("w-full justify-between text-left font-normal bg-background", selectedAssigneeNames.length === 0 && "text-muted-foreground")}>
+                                <span className="truncate">
+                                    {selectedAssigneeNames.length > 0 ? selectedAssigneeNames.join(', ') : "Select Assignee(s)"}
+                                </span>
+                                <ChevronDown className="h-4 w-4 opacity-50" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width] max-h-60 overflow-y-auto" align="start">
+                            {assignableTeamMembers.length > 0 ? assignableTeamMembers.map(member => (
+                                <DropdownMenuCheckboxItem
+                                    key={member.id}
+                                    checked={newTaskAssignedToUserIds.includes(member.id)}
+                                    onCheckedChange={() => handleAssigneeToggle(member.id)}
+                                    onSelect={(e) => e.preventDefault()} // Prevent menu closing on item select
+                                >
                                     {member.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                                </DropdownMenuCheckboxItem>
+                            )) : (
+                                <DropdownMenuItem disabled>No team members available for assignment.</DropdownMenuItem>
+                            )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </div>
             <Button type="submit" disabled={!newTaskDescription.trim()} className="w-full sm:w-auto">
