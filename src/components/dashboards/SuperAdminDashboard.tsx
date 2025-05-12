@@ -6,7 +6,7 @@ import AdminDashboard from './AdminDashboard'; // Super Admin can see everything
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ShieldCheck, UsersCog, MessagesSquare, ListChecks } from 'lucide-react'; // Added MessagesSquare, ListChecks, changed Users2 to UsersCog
+import { ShieldCheck, UserCog, MessagesSquare, ListChecks } from 'lucide-react'; // Corrected UsersCog to UserCog
 
 interface SuperAdminDashboardProps {
   user: User;
@@ -35,7 +35,7 @@ export default function SuperAdminDashboard({ user, recentSessions, allSessions,
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <UsersCog className="h-5 w-5 text-primary" /> User Management
+              <UserCog className="h-5 w-5 text-primary" /> User Management
             </CardTitle>
             <CardDescription>
               Add, edit, or remove users and manage their roles.
@@ -92,3 +92,4 @@ export default function SuperAdminDashboard({ user, recentSessions, allSessions,
     </div>
   );
 }
+
