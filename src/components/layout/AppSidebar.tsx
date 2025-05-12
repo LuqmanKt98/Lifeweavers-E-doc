@@ -1,3 +1,4 @@
+
 // src/components/layout/AppSidebar.tsx
 "use client";
 
@@ -7,7 +8,7 @@ import type { Client } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { Home, Users, Settings, Leaf, ChevronLeft, ChevronRight, PlusCircle } from 'lucide-react';
+import { Home, Users, Settings, Leaf, ChevronLeft, ChevronRight, PlusCircle, Bell, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface AppSidebarProps {
@@ -22,11 +23,16 @@ export default function AppSidebar({ clients, isOpen, toggleSidebar }: AppSideba
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: Home },
+    { href: '/notifications', label: 'Notifications', icon: Bell },
+    { href: '/messages', label: 'Messages', icon: MessageSquare },
     // Add more static nav items if needed
   ];
 
   if (user?.role === 'Super Admin' || user?.role === 'Admin') {
-    navItems.push({ href: '/admin/users', label: 'User Management', icon: Settings });
+    // Ensure User Management is not duplicated if already there
+    if (!navItems.find(item => item.href === '/admin/users')) {
+      navItems.push({ href: '/admin/users', label: 'User Management', icon: Settings });
+    }
   }
   
   const commonLinkClasses = "flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors";

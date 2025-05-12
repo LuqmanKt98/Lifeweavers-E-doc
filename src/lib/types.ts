@@ -1,3 +1,4 @@
+
 export type UserRole = 'Super Admin' | 'Admin' | 'Clinician';
 
 export interface User {
@@ -30,3 +31,44 @@ export interface SessionNote {
   // For version history, more fields would be needed
 }
 
+// Notifications and Messages Types
+
+export type NotificationType = 'admin_broadcast' | 'system_update' | 'team_alert';
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  content: string;
+  timestamp: string; // ISO string
+  read: boolean;
+  recipientUserIds?: string[]; // Undefined or empty for broadcast to all, specific IDs for targeted
+  relatedLink?: string; // Optional link, e.g., to a client page or session
+}
+
+export type MessageThreadType = 'dm' | 'team_chat';
+
+export interface MessageThread {
+  id: string;
+  type: MessageThreadType;
+  name?: string; // e.g., "Team John Doe Chat" or "DM with Casey Clinician"
+  participantIds: string[]; // User IDs
+  clientTeamId?: string; // clientId if it's a team_chat
+  lastMessageTimestamp: string; // ISO string
+  lastMessageSnippet?: string;
+  unreadCount: number; // Unread messages for the current user in this thread
+  avatarUrl?: string; // For DM or team avatar
+  avatarFallback?: string;
+}
+
+export interface Message {
+  id: string;
+  threadId: string;
+  senderId: string;
+  senderName: string;
+  senderAvatarUrl?: string;
+  senderAvatarFallback?: string;
+  content: string;
+  timestamp: string; // ISO string
+  isOwnMessage?: boolean; // Helper for UI rendering
+}
