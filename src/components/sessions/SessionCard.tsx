@@ -8,7 +8,38 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import { CalendarDays, Edit3, Paperclip, Eye, FileText, Image as ImageIcon, Video, FileArchive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import FilePreviewModal from '@/components/shared/FilePreviewModal'; // Import the new modal
+import FilePreviewModal from '@/components/shared/FilePreviewModal';
+import { cn } from '@/lib/utils';
+
+// Helper function to check if HTML content is effectively empty
+const isContentEffectivelyEmpty = (htmlContent: string | undefined): boolean => {
+  if (!htmlContent) {
+    return true;
+  }
+  // For client-side components, DOMParser is available.
+  if (typeof window !== 'undefined') {
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlContent, 'text/html');
+      const textContent = doc.body.textContent || "";
+      return textContent.trim() === "";
+    } catch (e) {
+      // Fallback if DOMParser fails (e.g. very malformed HTML, though unlikely for Tiptap output)
+      console.error("DOMParser failed in isContentEffectivelyEmpty:", e);
+      // Basic fallback: check if string only contains whitespace or common empty HTML tags
+      const simplifiedContent = htmlContent
+        .replace(/<p><\/p>/gi, '')
+        .replace(/<br\s*\/?>/gi, '')
+        .replace(/&nbsp;/gi, '')
+        .trim();
+      return simplifiedContent === '' || simplifiedContent.replace(/<[^>]+>/g, '').trim() === '';
+    }
+  }
+  // Fallback for non-browser environments (SSR, though this is 'use client')
+  // This is a very basic fallback and might not cover all cases of "empty" HTML.
+  return htmlContent.replace(/<[^>]+>/g, '').trim() === '';
+};
+
 
 interface SessionCardProps {
   session: SessionNote;
@@ -33,16 +64,18 @@ export default function SessionCard({ session, canModifyNotes }: SessionCardProp
   const getFileIcon = (fileType: Attachment['fileType']) => {
     switch(fileType) {
       case 'image': return <ImageIcon className="h-4 w-4 text-muted-foreground" />;
-      case 'pdf': return <FileText className="h-4 w-4 text-muted-foreground" />; // Or a PDF specific icon
+      case 'pdf': return <FileText className="h-4 w-4 text-muted-foreground" />;
       case 'video': return <Video className="h-4 w-4 text-muted-foreground" />;
       case 'document':
       case 'spreadsheet':
       case 'presentation':
-        return <FileArchive className="h-4 w-4 text-muted-foreground" />; // Generic doc icon
+        return <FileArchive className="h-4 w-4 text-muted-foreground" />; 
       default: return <Paperclip className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
+  const contentIsEmpty = isContentEffectivelyEmpty(session.content);
+  const attachmentsAreEmpty = !session.attachments || session.attachments.length === 0;
 
   return (
     <>
@@ -69,41 +102,51 @@ export default function SessionCard({ session, canModifyNotes }: SessionCardProp
           </div>
         </CardHeader>
         <CardContent className="py-6">
-          <div 
-            className="prose prose-sm max-w-none text-foreground" 
-            dangerouslySetInnerHTML={{ __html: session.content || "<p>No textual content for this session.</p>" }} 
-          />
-          {session.attachments && session.attachments.length > 0 && (
-            <div className="mt-6 pt-4 border-t">
-              <h4 className="text-md font-semibold mb-3 text-foreground/90 flex items-center gap-2">
-                <Paperclip className="h-5 w-5 text-primary" /> Attached Files
-              </h4>
-              <ul className="space-y-2">
-                {session.attachments.map((att) => (
-                  <li key={att.id} className="flex items-center justify-between p-2 bg-secondary/20 hover:bg-secondary/40 rounded-md transition-colors">
-                    <div className="flex items-center gap-2 text-sm text-foreground">
-                      {getFileIcon(att.fileType)}
-                      <span>{att.name}</span>
-                      <span className="text-xs text-muted-foreground">({att.fileType})</span>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={() => handlePreviewAttachment(att)}>
-                      <Eye className="mr-2 h-4 w-4" /> Preview
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {contentIsEmpty && attachmentsAreEmpty ? (
+            <p className="text-muted-foreground italic">No content or attachments for this session.</p>
+          ) : (
+            <>
+              {contentIsEmpty && !attachmentsAreEmpty ? (
+                <p className="text-muted-foreground italic mb-4">No textual content for this session. See attachments below.</p>
+              ) : (
+                !contentIsEmpty && session.content && ( 
+                  <div
+                    className="prose prose-sm max-w-none text-foreground"
+                    dangerouslySetInnerHTML={{ __html: session.content }}
+                  />
+                )
+              )}
+
+              {!attachmentsAreEmpty && session.attachments && (
+                <div className={cn("mt-6 pt-4", !contentIsEmpty && "border-t")}>
+                  <h4 className="text-md font-semibold mb-3 text-foreground/90 flex items-center gap-2">
+                    <Paperclip className="h-5 w-5 text-primary" /> Attached Files
+                  </h4>
+                  <ul className="space-y-2">
+                    {session.attachments.map((att) => (
+                      <li key={att.id} className="flex items-center justify-between p-2 bg-secondary/20 hover:bg-secondary/40 rounded-md transition-colors">
+                        <div className="flex items-center gap-2 text-sm text-foreground">
+                          {getFileIcon(att.fileType)}
+                          <span>{att.name}</span>
+                          <span className="text-xs text-muted-foreground">({att.fileType})</span>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => handlePreviewAttachment(att)}>
+                          <Eye className="mr-2 h-4 w-4" /> Preview
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
           )}
-           {( !session.content || session.content === '<p>No content for this session.</p>') && (!session.attachments || session.attachments.length === 0) && (
-             <p className="text-muted-foreground italic">No content or attachments for this session.</p>
-           )}
         </CardContent>
         <CardFooter className="border-t pt-4 flex justify-between items-center">
           <p className="text-xs text-muted-foreground">
             Last updated: {format(new Date(session.updatedAt), 'Pp')}
           </p>
           {canModifyNotes && (
-            <Button variant="outline" size="sm" disabled> {/* Edit functionality to be implemented */}
+            <Button variant="outline" size="sm" disabled> 
                 <Edit3 className="mr-2 h-4 w-4" /> Edit Session
             </Button>
           )}
