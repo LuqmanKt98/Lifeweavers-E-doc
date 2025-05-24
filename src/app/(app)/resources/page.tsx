@@ -7,12 +7,15 @@ import type { Resource } from '@/lib/types';
 import { MOCK_RESOURCES_DB } from '@/lib/mockDatabase';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Package, Search, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button'; // Added Button
+import { Package, Search, AlertCircle, PlusCircle } from 'lucide-react'; // Added PlusCircle
 import ResourceListItem from '@/components/resources/ResourceListItem';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast'; // Added useToast
 
 export default function ResourcesPage() {
-  const { user } = useAuth(); // Currently unused, but good for future RBAC on resources
+  const { user } = useAuth(); 
+  const { toast } = useToast(); // Initialize toast
   const [searchTerm, setSearchTerm] = useState('');
   const [resources, setResources] = useState<Resource[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,16 +39,33 @@ export default function ResourcesPage() {
     resource.resourceType.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const canManageResources = user && (user.role === 'Admin' || user.role === 'Super Admin');
+
+  const handleAddNewResource = () => {
+    toast({
+        title: "Feature Not Implemented",
+        description: "Creating new resources will be available soon.",
+        variant: "default",
+    });
+  };
+
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
-            <Package className="h-7 w-7" /> Resources
-          </CardTitle>
-          <CardDescription>
-            Discover useful documents, links, tools, and guides shared by the team.
-          </CardDescription>
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
+                <Package className="h-7 w-7" /> Resources
+              </CardTitle>
+              <CardDescription>
+                Discover useful documents, links, tools, and guides shared by the team.
+              </CardDescription>
+            </div>
+            {canManageResources && (
+                <Button onClick={handleAddNewResource} variant="default">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add New Resource
+                </Button>
+            )}
         </CardHeader>
       </Card>
 

@@ -7,12 +7,15 @@ import type { KnowledgeBaseArticle } from '@/lib/types';
 import { MOCK_KNOWLEDGE_BASE_ARTICLES_DB, MOCK_ALL_USERS_DATABASE } from '@/lib/mockDatabase';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { BookOpen, Search, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button'; // Added Button
+import { BookOpen, Search, AlertCircle, PlusCircle } from 'lucide-react'; // Added PlusCircle
 import KnowledgeBaseListItem from '@/components/knowledge-base/KnowledgeBaseListItem';
-import { useAuth } from '@/contexts/AuthContext'; // To get current user for context if needed later
+import { useAuth } from '@/contexts/AuthContext'; 
+import { useToast } from '@/hooks/use-toast'; // Added useToast
 
 export default function KnowledgeBasePage() {
-  const { user } = useAuth(); // Currently unused, but good to have for future RBAC on articles
+  const { user } = useAuth(); 
+  const { toast } = useToast(); // Initialize toast
   const [searchTerm, setSearchTerm] = useState('');
   const [articles, setArticles] = useState<KnowledgeBaseArticle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,16 +38,33 @@ export default function KnowledgeBasePage() {
     article.authorName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const canManageKB = user && (user.role === 'Admin' || user.role === 'Super Admin');
+
+  const handleAddNewArticle = () => {
+    toast({
+        title: "Feature Not Implemented",
+        description: "Creating new knowledge base articles will be available soon.",
+        variant: "default",
+    });
+  };
+
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
-            <BookOpen className="h-7 w-7" /> Knowledge Base
-          </CardTitle>
-          <CardDescription>
-            Find helpful articles, guides, and resources shared by the team.
-          </CardDescription>
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
+              <BookOpen className="h-7 w-7" /> Knowledge Base
+            </CardTitle>
+            <CardDescription>
+              Find helpful articles, guides, and resources shared by the team.
+            </CardDescription>
+          </div>
+          {canManageKB && (
+            <Button onClick={handleAddNewArticle} variant="default">
+              <PlusCircle className="mr-2 h-4 w-4" /> Create New Article
+            </Button>
+          )}
         </CardHeader>
       </Card>
 
