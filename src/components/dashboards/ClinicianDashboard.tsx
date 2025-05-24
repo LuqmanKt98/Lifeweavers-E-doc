@@ -9,12 +9,12 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Users, Briefcase, Clock, ArrowRight, BookOpen, FileText } from 'lucide-react'; // Added BookOpen, FileText
 import { formatDistanceToNow, format } from 'date-fns';
-import { MOCK_KNOWLEDGE_BASE_ARTICLES_DB } from '@/lib/mockDatabase'; // Import mock KB data
+import { MOCK_KNOWLEDGE_BASE_ARTICLES_DB, MOCK_CLIENTS_DB, doUsersShareAnyClient, MOCK_ALL_USERS_DATABASE } from '@/lib/mockDatabase'; // Import mock KB data and client DB
 
 interface ClinicianDashboardProps {
   user: User;
   clients: Client[];
-  team: User[];
+  team: User[]; // This is effectively MOCK_ALL_USERS_DATABASE
 }
 
 export default function ClinicianDashboard({ user, clients, team }: ClinicianDashboardProps) {
@@ -30,6 +30,15 @@ export default function ClinicianDashboard({ user, clients, team }: ClinicianDas
     .filter(article => article.isPublished)
     .sort((a, b) => new Date(b.publishedAt || b.createdAt).getTime() - new Date(a.publishedAt || a.createdAt).getTime())
     .slice(0, 5);
+
+  const visibleTeamMembers = team.filter(member => {
+    if (member.id === user.id) return false; // Don't show self
+    if (member.role === 'Admin' || member.role === 'Super Admin') return true; // Always show admins
+    if (member.role === 'Clinician') {
+      return doUsersShareAnyClient(user.id, member.id, MOCK_CLIENTS_DB);
+    }
+    return false;
+  });
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -118,9 +127,9 @@ export default function ClinicianDashboard({ user, clients, team }: ClinicianDas
           <CardDescription>Your colleagues at LWV CLINIC E-DOC.</CardDescription>
         </CardHeader>
         <CardContent>
-          {team.filter(member => member.id !== user.id).length > 0 ? (
+          {visibleTeamMembers.length > 0 ? (
              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {team.filter(member => member.id !== user.id).map((member) => ( 
+              {visibleTeamMembers.map((member) => ( 
                 <li key={member.id} className="flex items-center gap-3 p-3 bg-secondary/30 rounded-lg list-none">
                   <Avatar className="h-10 w-10">
                      <AvatarImage src={`https://picsum.photos/seed/${member.id}/40/40`} alt={member.name} data-ai-hint="professional team" />
@@ -134,7 +143,7 @@ export default function ClinicianDashboard({ user, clients, team }: ClinicianDas
               ))}
             </div>
           ) : (
-            <p className="text-muted-foreground">Team information is not available at the moment.</p>
+            <p className="text-muted-foreground">No other relevant team members to display based on shared clients.</p>
           )}
         </CardContent>
       </Card>

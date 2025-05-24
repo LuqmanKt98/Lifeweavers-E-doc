@@ -31,6 +31,19 @@ export let MOCK_CLIENTS_DB: Record<string, Client> = {
   'client-6': { id: 'client-6', name: 'Diana Prince', dateAdded: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString(), teamMemberIds: ['user_clinician', 'user_clinician2', 'user_new1'] },
 };
 
+// --- Helper function for shared clients ---
+export const doUsersShareAnyClient = (user1Id: string, user2Id: string, allClients: Record<string, Client>): boolean => {
+  for (const clientId in allClients) {
+    const client = allClients[clientId];
+    const teamMembers = client.teamMemberIds || [];
+    if (teamMembers.includes(user1Id) && teamMembers.includes(user2Id)) {
+      return true;
+    }
+  }
+  return false;
+};
+
+
 // --- Centralized Mock Sessions ---
 const today = new Date();
 export let MOCK_SESSIONS_DB: Record<string, SessionNote[]> = {
@@ -359,5 +372,6 @@ export let MOCK_RESOURCES_DB: Resource[] = [
     viewCount: 95,
   }
 ];
+
 
 

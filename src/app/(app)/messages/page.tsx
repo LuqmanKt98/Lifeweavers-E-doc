@@ -12,9 +12,10 @@ import { MessageSquareText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
   MOCK_ALL_USERS_DATABASE, 
-  MOCK_CLIENTS_DB, // Used for team names
+  MOCK_CLIENTS_DB, 
   MOCK_MESSAGE_THREADS_DATA, 
-  MOCK_MESSAGES_DATA 
+  MOCK_MESSAGES_DATA,
+  doUsersShareAnyClient 
 } from '@/lib/mockDatabase';
 
 
@@ -39,8 +40,7 @@ export default function MessagesPage() {
       const userAvatarUrl = `https://picsum.photos/seed/${user.id}/32/32`;
       const userAvatarFallback = getInitials(user.name);
 
-      // Process threads data (ensure this doesn't mutate the imported MOCK_MESSAGE_THREADS_DATA directly if it's not desired)
-      let userThreads = MOCK_MESSAGE_THREADS_DATA.map(thread => ({
+      let processedThreads = MOCK_MESSAGE_THREADS_DATA.map(thread => ({
         ...thread,
         participantIds: thread.participantIds.map(id => id === 'user_current_placeholder' ? currentUserId : id),
         ...(thread.type === 'dm' && thread.participantIds.includes(currentUserId) && {
@@ -54,9 +54,24 @@ export default function MessagesPage() {
             avatarFallback: getInitials(MOCK_CLIENTS_DB[thread.clientTeamId].name)
         })
       })).filter(thread => thread.participantIds.includes(currentUserId));
-      setThreads(userThreads);
 
-      // Process messages data similarly
+      // Apply clinician DM filtering
+      if (user.role === 'Clinician') {
+        processedThreads = processedThreads.filter(thread => {
+          if (thread.type === 'dm') {
+            const otherParticipantId = thread.participantIds.find(id => id !== user.id);
+            if (!otherParticipantId) return false; // Should not happen in a valid DM
+            const otherParticipantUser = MOCK_ALL_USERS_DATABASE.find(u => u.id === otherParticipantId);
+            if (otherParticipantUser?.role === 'Clinician') {
+              return doUsersShareAnyClient(user.id, otherParticipantId, MOCK_CLIENTS_DB);
+            }
+          }
+          return true; // Allow team chats and DMs with non-clinicians (Admins/SuperAdmins)
+        });
+      }
+      setThreads(processedThreads);
+
+      // Process messages data similarly (no filtering needed here based on new rules)
       let userMessages = Object.fromEntries(
         Object.entries(MOCK_MESSAGES_DATA).map(([threadId, msgs]) => [
           threadId,
@@ -69,8 +84,6 @@ export default function MessagesPage() {
           }))
         ])
       );
-      // If you need to update MOCK_MESSAGES_DATA itself, do it here.
-      // For now, this just processes for local state.
     }
   }, [user]);
 
@@ -82,7 +95,6 @@ export default function MessagesPage() {
         setMessages(threadMessages.map(msg => ({...msg, isOwnMessage: msg.senderId === user.id})));
         
         setThreads(prevThreads => prevThreads.map(t => t.id === selectedThreadId ? {...t, unreadCount: 0} : t));
-        // Also update the "global" mock if needed for persistence across navigation
         const globalThreadIndex = MOCK_MESSAGE_THREADS_DATA.findIndex(t => t.id === selectedThreadId);
         if (globalThreadIndex !== -1) {
             MOCK_MESSAGE_THREADS_DATA[globalThreadIndex].unreadCount = 0;
@@ -126,7 +138,6 @@ export default function MessagesPage() {
         ).sort((a,b) => new Date(b.lastMessageTimestamp).getTime() - new Date(a.lastMessageTimestamp).getTime());
     setThreads(updatedThreads);
 
-    // Update global mock as well
     const globalThreadIndex = MOCK_MESSAGE_THREADS_DATA.findIndex(t => t.id === threadId);
     if (globalThreadIndex !== -1) {
         MOCK_MESSAGE_THREADS_DATA[globalThreadIndex].lastMessageSnippet = content;
@@ -139,10 +150,22 @@ export default function MessagesPage() {
   const handleStartNewDm = () => {
     if (!user) return;
 
-    const otherUsers = MOCK_ALL_USERS_DATABASE.filter(u => u.id !== user.id);
-    let targetUser: User | undefined = undefined;
+    let potentialTargets = MOCK_ALL_USERS_DATABASE.filter(u => u.id !== user.id);
 
-    for (const potentialTarget of otherUsers) {
+    if (user.role === 'Clinician') {
+      potentialTargets = potentialTargets.filter(targetUser => {
+        if (targetUser.role === 'Admin' || targetUser.role === 'Super Admin') {
+          return true; // Clinicians can always DM Admins/SuperAdmins
+        }
+        if (targetUser.role === 'Clinician') {
+          return doUsersShareAnyClient(user.id, targetUser.id, MOCK_CLIENTS_DB);
+        }
+        return false; // Should not happen if roles are correctly defined
+      });
+    }
+    
+    let targetUser: User | undefined = undefined;
+    for (const potentialTarget of potentialTargets) {
         const existingDm = threads.find(t => 
             t.type === 'dm' && 
             t.participantIds.includes(user.id) && 
@@ -155,7 +178,7 @@ export default function MessagesPage() {
     }
 
     if (!targetUser) {
-        toast({ title: "Cannot Start New DM", description: "You already have DMs with all available mock users or no other users found.", variant: "default" });
+        toast({ title: "Cannot Start New DM", description: "You already have DMs with all available/eligible users or no eligible users found.", variant: "default" });
         return;
     }
     
@@ -181,7 +204,7 @@ export default function MessagesPage() {
         content: `You started a conversation with ${targetUser.name}.`,
         timestamp: new Date().toISOString(),
     }];
-    setThreads(prev => [newDmThread, ...prev]);
+    setThreads(prev => [newDmThread, ...prev].sort((a,b) => new Date(b.lastMessageTimestamp).getTime() - new Date(a.lastMessageTimestamp).getTime()));
     setSelectedThreadId(newThreadId);
     toast({ title: "New DM Started", description: `You can now chat with ${targetUser.name}.` });
   };
@@ -200,7 +223,7 @@ export default function MessagesPage() {
                     <MessageSquareText className="h-7 w-7" /> Messages
                 </CardTitle>
                 <CardDescription>
-                    Communicate with your team and colleagues directly.
+                    Communicate with your team and colleagues directly. Clinicians can DM other clinicians only if they share a client.
                 </CardDescription>
             </CardHeader>
         </Card>
