@@ -1,7 +1,7 @@
 
 // src/lib/mockDatabase.ts
 import type { Client, SessionNote, User, ToDoTask, Attachment, Notification, MessageThread, Message, KnowledgeBaseArticle, Resource } from '@/lib/types';
-import { format, addDays, startOfDay, subDays } from 'date-fns';
+import { format, addDays, startOfDay, subDays, addHours } from 'date-fns';
 
 // --- Centralized Mock Users ---
 // This list includes all potential users, including those for selection in various parts of the app.
@@ -32,6 +32,7 @@ export let MOCK_CLIENTS_DB: Record<string, Client> = {
 };
 
 // --- Centralized Mock Sessions ---
+const today = new Date();
 export let MOCK_SESSIONS_DB: Record<string, SessionNote[]> = {
   'client-1': [
     { id: 'sess-1-1', clientId: 'client-1', sessionNumber: 1, dateOfSession: new Date(2023, 7, 1).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: 'Physiotherapist', content: '<p>Initial assessment. Patient presents with lower back pain, radiating to the left leg. ROM limited in lumbar flexion and extension.</p><p>Objective: Decrease pain, improve ROM, and educate on self-management.</p>', attachments: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
@@ -40,6 +41,19 @@ export let MOCK_SESSIONS_DB: Record<string, SessionNote[]> = {
         { id: 'att-1-3-1', name: 'Lumbar_MRI_Scan.pdf', mimeType: 'application/pdf', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', fileType: 'pdf' }
     ], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
     { id: 'sess-1-4', clientId: 'client-1', sessionNumber: 4, dateOfSession: new Date(2023,8,17).toISOString(), attendingClinicianId: 'user_clinician', attendingClinicianName: 'Casey Clinician', attendingClinicianVocation: 'Physiotherapist', content: '<p>Continued with range of motion exercises. Patient progressing well. Lumbar flexion improved by 15 degrees. Pain now 2/10 at rest.</p><p>Introduced core strengthening exercises.</p>', attachments: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    { 
+      id: 'sess-1-future-1', 
+      clientId: 'client-1', 
+      sessionNumber: 5, 
+      dateOfSession: addDays(startOfDay(today), 3).toISOString(), // 3 days from now
+      attendingClinicianId: 'user_clinician', 
+      attendingClinicianName: 'Casey Clinician', 
+      attendingClinicianVocation: 'Physiotherapist', 
+      content: '<p>Upcoming session: Review progress with core strengthening. Discuss return to sport activities.</p>', 
+      attachments: [], 
+      createdAt: new Date().toISOString(), 
+      updatedAt: new Date().toISOString() 
+    },
   ],
   'client-2': [
     { id: 'sess-2-1', clientId: 'client-2', sessionNumber: 1, dateOfSession: new Date(2023, 7, 5).toISOString(), attendingClinicianId: 'user_clinician2', attendingClinicianName: 'Jamie Therapist', attendingClinicianVocation: 'Occupational Therapist', content: '<p>First session. Discussed goals: improve daily task management and reduce workplace stress.</p><p>Patient reports feeling overwhelmed with current workload.</p>', attachments: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
@@ -47,6 +61,19 @@ export let MOCK_SESSIONS_DB: Record<string, SessionNote[]> = {
         { id: 'att-2-2-1', name: 'Mindfulness_Guide.pdf', mimeType: 'application/pdf', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', fileType: 'pdf'},
         { id: 'att-2-2-2', name: 'Workplace_Ergonomics.jpg', mimeType: 'image/jpeg', url: 'https://picsum.photos/seed/ergonomics/600/400', previewUrl: 'https://picsum.photos/seed/ergonomics/600/400', fileType: 'image' }
     ], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+     { 
+      id: 'sess-2-future-1', 
+      clientId: 'client-2', 
+      sessionNumber: 3, 
+      dateOfSession: addDays(startOfDay(today), 5).toISOString(), // 5 days from now
+      attendingClinicianId: 'user_clinician2', 
+      attendingClinicianName: 'Jamie Therapist', 
+      attendingClinicianVocation: 'Occupational Therapist', 
+      content: '<p>Upcoming session: Follow-up on mindfulness practice. Introduce time management techniques for workload.</p>', 
+      attachments: [], 
+      createdAt: new Date().toISOString(), 
+      updatedAt: new Date().toISOString() 
+    },
   ],
 };
 
@@ -332,3 +359,5 @@ export let MOCK_RESOURCES_DB: Resource[] = [
     viewCount: 95,
   }
 ];
+
+
