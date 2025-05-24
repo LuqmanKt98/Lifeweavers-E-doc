@@ -1,3 +1,4 @@
+
 // src/components/shared/EventCalendar.tsx
 "use client";
 
@@ -5,7 +6,7 @@ import { useState, useMemo } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { SessionNote } from '@/lib/types';
-import { format, isSameDay, parseISO } from 'date-fns';
+import { format, isSameDay, parseISO, addHours } from 'date-fns'; // Added addHours
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CalendarIcon, Clock } from 'lucide-react';
 import { MOCK_CLIENTS_DB } from '@/lib/mockDatabase'; // Import MOCK_CLIENTS_DB
@@ -84,20 +85,24 @@ export default function EventCalendar({ sessions }: EventCalendarProps) {
           <ScrollArea className="h-72 border rounded-md p-3 bg-secondary/30">
             {sessionsOnSelectedDate.length > 0 ? (
               <ul className="space-y-3">
-                {sessionsOnSelectedDate.map(session => (
-                  <li key={session.id} className="p-3 bg-card rounded-md shadow-sm hover:shadow-md transition-shadow">
-                    <p className="font-medium text-sm text-primary">
-                      {getClientName(session.clientId)} / {session.attendingClinicianName}
-                    </p>
-                    <div className="text-xs text-muted-foreground mt-1 flex items-center">
-                      <Clock className="mr-1.5 h-3.5 w-3.5" />
-                      <span>{format(parseISO(session.dateOfSession), 'HH:mm')}</span>
-                      {/* If you want to assume a 1-hour duration for display:
-                      <span>{format(parseISO(session.dateOfSession), 'HH:mm')} - {format(addHours(parseISO(session.dateOfSession), 1), 'HH:mm')}</span>
-                      */}
-                    </div>
-                  </li>
-                ))}
+                {sessionsOnSelectedDate.map(session => {
+                  const startTime = parseISO(session.dateOfSession);
+                  // Assuming a 1-hour duration for display purposes
+                  const endTime = addHours(startTime, 1); 
+                  return (
+                    <li key={session.id} className="p-3 bg-card rounded-md shadow-sm hover:shadow-md transition-shadow">
+                      <p className="font-medium text-sm text-primary">
+                        {getClientName(session.clientId)} / {session.attendingClinicianName}
+                      </p>
+                      <div className="text-xs text-muted-foreground mt-1 flex items-center">
+                        <Clock className="mr-1.5 h-3.5 w-3.5" />
+                        <span>
+                          {format(startTime, 'p')} - {format(endTime, 'p')}
+                        </span>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
               <p className="text-sm text-muted-foreground pt-2">
@@ -110,3 +115,4 @@ export default function EventCalendar({ sessions }: EventCalendarProps) {
     </Card>
   );
 }
+
