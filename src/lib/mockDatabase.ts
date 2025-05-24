@@ -1,6 +1,6 @@
 
 // src/lib/mockDatabase.ts
-import type { Client, SessionNote, User, ToDoTask, Attachment, Notification, MessageThread, Message, KnowledgeBaseArticle } from '@/lib/types';
+import type { Client, SessionNote, User, ToDoTask, Attachment, Notification, MessageThread, Message, KnowledgeBaseArticle, Resource } from '@/lib/types';
 import { format, addDays, startOfDay, subDays } from 'date-fns';
 
 // --- Centralized Mock Users ---
@@ -238,4 +238,97 @@ export let MOCK_KNOWLEDGE_BASE_ARTICLES_DB: KnowledgeBaseArticle[] = [
     tags: ['physiotherapy', 'technology', 'innovation'],
     viewCount: 75,
   },
+];
+
+// --- Centralized Mock Resources ---
+export let MOCK_RESOURCES_DB: Resource[] = [
+  {
+    id: 'res-1',
+    slug: 'cognitive-behavioral-therapy-workbook',
+    title: 'Cognitive Behavioral Therapy (CBT) Workbook',
+    content: '<p>A comprehensive workbook designed to guide users through common CBT exercises. Useful for both clinicians and clients.</p>',
+    excerpt: 'A downloadable PDF workbook for CBT exercises.',
+    authorId: 'user_superadmin',
+    authorName: 'Dr. Super Admin',
+    createdAt: subDays(new Date(), 20).toISOString(),
+    updatedAt: subDays(new Date(), 5).toISOString(),
+    publishedAt: subDays(new Date(), 5).toISOString(),
+    isPublished: true,
+    tags: ['cbt', 'workbook', 'mental health', 'self-help'],
+    coverImageUrl: 'https://placehold.co/600x400.png',
+    attachments: [
+      { id: 'res-att-1-1', name: 'CBT_Workbook.pdf', mimeType: 'application/pdf', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', fileType: 'pdf' }
+    ],
+    resourceType: 'document',
+    viewCount: 180,
+  },
+  {
+    id: 'res-2',
+    slug: 'mindfulness-meditation-guided-audio',
+    title: 'Guided Mindfulness Meditation Audio Tracks',
+    content: '<p>A collection of guided audio meditations for various durations (5, 10, 20 minutes) to help with stress reduction and focus.</p><p>Access these tracks on our partner site for a calming experience.</p>',
+    excerpt: 'Audio tracks for guided mindfulness meditation sessions.',
+    authorId: 'user_clinician2',
+    authorName: 'Jamie Therapist',
+    createdAt: subDays(new Date(), 15).toISOString(),
+    updatedAt: subDays(new Date(), 3).toISOString(),
+    publishedAt: subDays(new Date(), 3).toISOString(),
+    isPublished: true,
+    tags: ['mindfulness', 'meditation', 'audio', 'stress relief'],
+    externalLink: 'https://www.example.com/mindfulness-audio-tracks', // Example external link
+    resourceType: 'website', 
+    coverImageUrl: 'https://placehold.co/600x400.png',
+    viewCount: 250,
+  },
+  {
+    id: 'res-3',
+    slug: 'pain-management-techniques-video-series',
+    title: 'Pain Management Techniques Video Series',
+    content: '<p>A series of short videos demonstrating various non-pharmacological pain management techniques, including stretching and breathing exercises. Available on our YouTube channel.</p>',
+    excerpt: 'Video series demonstrating pain management techniques.',
+    authorId: 'user_clinician',
+    authorName: 'Casey Clinician',
+    createdAt: subDays(new Date(), 8).toISOString(),
+    updatedAt: subDays(new Date(), 1).toISOString(),
+    publishedAt: subDays(new Date(), 1).toISOString(),
+    isPublished: true,
+    tags: ['pain management', 'video', 'exercise', 'self-care'],
+    coverImageUrl: 'https://placehold.co/600x400.png',
+    resourceType: 'video',
+    externalLink: 'https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxx', // Example YouTube playlist
+    viewCount: 110,
+  },
+  {
+    id: 'res-4',
+    slug: 'nutrition-guidelines-for-recovery',
+    title: 'Nutrition Guidelines for Optimal Recovery',
+    content: '<p>Evidence-based nutritional advice to support physical recovery and overall well-being. Includes meal planning tips and recipe ideas.</p>',
+    excerpt: 'Comprehensive guide on nutrition for recovery, including meal ideas.',
+    authorId: 'user_admin',
+    authorName: 'Alex Admin',
+    createdAt: subDays(new Date(), 30).toISOString(),
+    updatedAt: subDays(new Date(), 30).toISOString(),
+    isPublished: false, // Draft resource
+    tags: ['nutrition', 'recovery', 'health', 'meal plan'],
+    resourceType: 'guide',
+  },
+  {
+    id: 'res-5',
+    slug: 'recommended-therapy-tools-list',
+    title: 'Recommended Therapy Tools and Equipment',
+    content: '<p>A curated list of recommended tools for various therapy types, including links to purchase or learn more.</p>',
+    excerpt: 'A list of useful tools and equipment for therapists.',
+    authorId: 'user_superadmin',
+    authorName: 'Dr. Super Admin',
+    createdAt: subDays(new Date(), 3).toISOString(),
+    updatedAt: subDays(new Date(), 1).toISOString(),
+    publishedAt: subDays(new Date(), 1).toISOString(),
+    isPublished: true,
+    tags: ['tools', 'equipment', 'therapy supplies'],
+    resourceType: 'tool',
+    attachments: [
+       { id: 'res-att-5-1', name: 'Equipment_Catalog_Preview.pdf', mimeType: 'application/pdf', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', fileType: 'pdf' }
+    ],
+    viewCount: 95,
+  }
 ];

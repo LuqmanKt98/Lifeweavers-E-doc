@@ -141,3 +141,24 @@ export interface KnowledgeBaseArticle {
   attachments?: Attachment[];
   viewCount?: number;
 }
+
+// Resource Item
+export interface Resource {
+  id: string;
+  slug: string; // URL-friendly identifier
+  title: string;
+  content: string; // HTML content for description or notes
+  excerpt?: string; // Short summary
+  authorId: string; // User ID of who added/manages it
+  authorName: string;
+  createdAt: string; // ISO string
+  updatedAt: string; // ISO string
+  publishedAt?: string; // ISO string, if published
+  isPublished: boolean;
+  tags?: string[];
+  coverImageUrl?: string;
+  attachments?: Attachment[]; // Key part for resources
+  externalLink?: string; // If the resource is primarily an external link
+  resourceType: 'document' | 'video' | 'website' | 'tool' | 'guide' | 'image' | 'other'; // To categorize resources
+  viewCount?: number;
+}
