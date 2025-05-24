@@ -10,7 +10,7 @@ import SuperAdminDashboard from '@/components/dashboards/SuperAdminDashboard';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button'; // Added Button
 import type { Client, SessionNote, User } from '@/lib/types';
-import { Lightbulb, RefreshCw, Loader2 } from 'lucide-react'; // Added RefreshCw, Loader2
+import { Lightbulb, RefreshCw, Loader2, CalendarIcon } from 'lucide-react'; // Added RefreshCw, Loader2, CalendarIcon
 import { MOCK_CLIENTS_DB, MOCK_SESSIONS_DB, MOCK_ALL_USERS_DATABASE } from '@/lib/mockDatabase';
 import EventCalendar from '@/components/shared/EventCalendar';
 import { syncGoogleCalendar } from '@/ai/flows/sync-google-calendar-flow'; // Added import for the new flow
@@ -132,12 +132,14 @@ export default function DashboardPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
          <CardTitle className="flex items-center gap-2 text-xl font-semibold text-primary">
-            Appointments
+            <CalendarIcon className="h-6 w-6" /> Appointments
           </CardTitle>
-          <Button onClick={handleSyncCalendar} disabled={isSyncingCalendar} variant="outline" size="sm">
-            {isSyncingCalendar ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-            {isSyncingCalendar ? 'Syncing...' : 'Sync Google Calendar (Mock)'}
-          </Button>
+          {(user.role === 'Admin' || user.role === 'Super Admin') && (
+            <Button onClick={handleSyncCalendar} disabled={isSyncingCalendar} variant="outline" size="sm">
+              {isSyncingCalendar ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+              {isSyncingCalendar ? 'Syncing...' : 'Sync Google Calendar (Mock)'}
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
            <EventCalendar sessions={sessionsForCalendarView} />
