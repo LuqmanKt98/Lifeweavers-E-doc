@@ -47,25 +47,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem('lifeweaver_user', JSON.stringify(foundUser));
       router.push('/dashboard');
     } else {
-      const defaultClinicianUser: User = {
-        id: `user_${Date.now()}`,
-        email: email,
-        name: email.split('@')[0], 
-        role: 'Clinician',
-        vocation: 'Therapist'
-      };
-      setUser(defaultClinicianUser);
-      localStorage.setItem('lifeweaver_user', JSON.stringify(defaultClinicianUser));
-      // Add this new dynamic user to the MOCK_ALL_USERS_DATABASE for this session for consistency if needed elsewhere
-      // Note: This in-memory update won't persist across full page reloads if MOCK_ALL_USERS_DATABASE is re-initialized from scratch.
-      const existingDynamicUserIndex = MOCK_ALL_USERS_DATABASE.findIndex(u => u.email === email);
-      if (existingDynamicUserIndex === -1) {
-        MOCK_ALL_USERS_DATABASE.push(defaultClinicianUser);
-      } else {
-         // If a dynamic user with this email somehow exists but wasn't matched (e.g. case sensitivity if mock data isn't lowercased), update it.
-         MOCK_ALL_USERS_DATABASE[existingDynamicUserIndex] = defaultClinicianUser;
-      }
-      router.push('/dashboard');
+      // User not found, throw an error to be caught by the LoginForm
+      setLoading(false);
+      throw new Error("Invalid credentials or user not found.");
     }
     setLoading(false);
   };
@@ -114,3 +98,4 @@ export const useAuth = () => {
   }
   return context;
 };
+

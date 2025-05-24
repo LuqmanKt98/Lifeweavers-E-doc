@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import Logo from '@/components/Logo';
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
@@ -29,8 +30,6 @@ export function LoginForm() {
     }
     setIsSubmitting(true);
     try {
-      // In mock, role is derived from email or defaults.
-      // For a real app, you might have a role selection or it's tied to the user account.
       await login(email);
       toast({
         title: "Login Successful",
@@ -39,7 +38,7 @@ export function LoginForm() {
     } catch (error) {
       toast({
         title: "Login Failed",
-        description: (error as Error).message || "An unexpected error occurred.",
+        description: (error as Error).message || "Invalid credentials or user not found. Please contact an administrator if you believe this is an error.",
         variant: "destructive",
       });
     } finally {
@@ -98,3 +97,4 @@ export function LoginForm() {
     </Card>
   );
 }
+
