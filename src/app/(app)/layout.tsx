@@ -1,3 +1,4 @@
+
 // src/app/(app)/layout.tsx
 "use client";
 
@@ -9,11 +10,8 @@ import { useRouter, usePathname } from 'next/navigation';
 import type { SpecialNotification } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import SpecialNotificationBanner from '@/components/layout/SpecialNotificationBanner';
-// EventCalendar import removed
 import { MOCK_CLIENTS_DB } from '@/lib/mockDatabase'; 
-// MOCK_SESSIONS_DB import removed as calendar is no longer here
 
-// Mock data for special notifications
 const MOCK_SPECIAL_NOTIFICATIONS_DATA: SpecialNotification[] = [
   {
     id: 'promo-banner-1',
@@ -44,14 +42,14 @@ const MOCK_SPECIAL_NOTIFICATIONS_DATA: SpecialNotification[] = [
 
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { currentUser, loading } = useAuth(); // Changed to currentUser
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeSpecialNotifications, setActiveSpecialNotifications] = useState<SpecialNotification[]>([]);
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && !currentUser) {
       router.replace('/login');
     }
 
@@ -64,7 +62,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     });
     setActiveSpecialNotifications(initiallyActive);
 
-  }, [user, loading, router]);
+  }, [currentUser, loading, router]);
   
 
   const getPageTitle = (currentPathname: string): string => {
@@ -78,12 +76,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (currentPathname === '/admin/cases') return 'Cases Management';
     if (currentPathname === '/notifications') return 'Notifications';
     if (currentPathname === '/messages') return 'Messages';
+    if (currentPathname === '/knowledge-base') return 'Knowledge Base';
+    if (currentPathname.startsWith('/knowledge-base/')) return 'Knowledge Base Article';
+    if (currentPathname === '/resources') return 'Resources';
+    if (currentPathname.startsWith('/resources/')) return 'Resource Details';
     return 'LWV CLINIC E-DOC';
   };
 
   const pageTitle = getPageTitle(pathname);
 
-  if (loading || !user) {
+  if (loading || !currentUser) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <p className="text-foreground">Loading dashboard...</p>
@@ -100,17 +102,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Prepare sessions for EventCalendar logic removed from here
-
   return (
     <div className="flex h-screen bg-secondary/50">
       <AppSidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
       <div className={`flex flex-1 flex-col transition-all duration-300 ease-in-out ${sidebarOpen ? 'md:ml-64' : 'md:ml-16'}`}>
-        <AppHeader user={user} toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} pageTitle={pageTitle} />
+        <AppHeader user={currentUser} toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} pageTitle={pageTitle} />
         <main className="flex-1 overflow-y-auto">
           <ScrollArea className="h-full">
             <div className="p-4 md:p-6 lg:p-8 space-y-6">
-             {/* EventCalendar rendering removed from here */}
              {children}
             </div>
           </ScrollArea>

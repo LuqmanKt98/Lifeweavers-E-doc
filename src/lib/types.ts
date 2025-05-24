@@ -162,3 +162,15 @@ export interface Resource {
   resourceType: 'document' | 'video' | 'website' | 'tool' | 'guide' | 'image' | 'other'; // To categorize resources
   viewCount?: number;
 }
+
+// Auth Context
+export interface AuthContextType {
+  user: User | null; // This will be the original logged-in user
+  currentUser: User | null; // This will be the impersonated user, or original if not impersonating
+  loading: boolean;
+  isImpersonating: boolean;
+  login: (email: string) => Promise<void>;
+  logout: () => Promise<void>;
+  startImpersonation: (targetUser: User) => Promise<void>;
+  stopImpersonation: () => Promise<void>;
+}

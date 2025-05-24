@@ -2,37 +2,35 @@
 // src/app/(app)/admin/users/page.tsx
 "use client";
 
-import { useState, useEffect } from 'react'; // Added useState and useEffect
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { User } from '@/lib/types';
-import { ShieldAlert, UserCog, Edit, Trash2, UserPlus } from 'lucide-react'; // Added UserPlus
+import { ShieldAlert, UserCog, Edit, Trash2, UserPlus, UserCheck, Eye } from 'lucide-react'; // Added UserCheck, Eye
 import { MOCK_ALL_USERS_DATABASE } from '@/lib/mockDatabase';
-import AddUserDialog from '@/components/admin/AddUserDialog'; // Import the new dialog
-import { useToast } from '@/hooks/use-toast'; // Import useToast
+import AddUserDialog from '@/components/admin/AddUserDialog';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 export default function UserManagementPage() {
-  const { user } = useAuth();
-  const { toast } = useToast(); // Initialize toast
+  const { currentUser, startImpersonation, isImpersonating, user: originalUser } = useAuth(); // Use currentUser for permissions
+  const { toast } = useToast();
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
-  // Use state for users to ensure list updates upon adding a new user
   const [displayedUsers, setDisplayedUsers] = useState<User[]>(MOCK_ALL_USERS_DATABASE);
 
-  // Effect to update displayedUsers if MOCK_ALL_USERS_DATABASE changes externally (though not expected in this mock setup)
   useEffect(() => {
     setDisplayedUsers([...MOCK_ALL_USERS_DATABASE].sort((a,b) => a.name.localeCompare(b.name)));
-  }, []); // Re-sort MOCK_ALL_USERS_DATABASE if it's ever modified elsewhere
+  }, []); 
 
-  if (!user || (user.role !== 'Super Admin' && user.role !== 'Admin')) {
+  if (!currentUser || (currentUser.role !== 'Super Admin' && currentUser.role !== 'Admin')) {
     return (
       <Card className="border-destructive bg-destructive/10">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-destructive">
-            <ShieldAlert className="h-6 w-6" />
-            Access Denied
+            <ShieldAlert className="h-6 w-6" /> Access Denied
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -51,9 +49,7 @@ export default function UserManagementPage() {
   };
 
   const handleUserAdded = (newUser: User) => {
-    // Directly mutate the mock database for this simulation
     MOCK_ALL_USERS_DATABASE.push(newUser);
-    // Update the local state to trigger re-render
     setDisplayedUsers([...MOCK_ALL_USERS_DATABASE].sort((a,b) => a.name.localeCompare(b.name)));
   };
 
@@ -61,9 +57,12 @@ export default function UserManagementPage() {
     const userToRemove = MOCK_ALL_USERS_DATABASE.find(u => u.id === userIdToRemove);
     if (!userToRemove) return;
 
-    // Prevent removing self or other Super Admins (especially if only one exists)
-    if (userToRemove.id === user?.id) {
+    if (userToRemove.id === currentUser?.id) {
       toast({ title: "Action Denied", description: "You cannot remove yourself.", variant: "destructive" });
+      return;
+    }
+    if (userToRemove.id === originalUser?.id && isImpersonating) {
+       toast({ title: "Action Denied", description: "You cannot remove your original Super Admin account while impersonating.", variant: "destructive" });
       return;
     }
     if (userToRemove.role === 'Super Admin' && MOCK_ALL_USERS_DATABASE.filter(u => u.role === 'Super Admin').length <=1) {
@@ -79,6 +78,14 @@ export default function UserManagementPage() {
     }
   }
 
+  const handleImpersonate = async (userToImpersonate: User) => {
+    if (currentUser?.role === 'Super Admin' && currentUser.id !== userToImpersonate.id) {
+      await startImpersonation(userToImpersonate);
+    } else {
+      toast({ title: "Impersonation Failed", description: "You cannot impersonate this user or yourself.", variant: "destructive"});
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -86,10 +93,10 @@ export default function UserManagementPage() {
           <div>
             <CardTitle className="text-2xl font-bold">User Management</CardTitle>
             <CardDescription>
-              View, add, edit, or remove users from the system.
+              View, add, edit, or remove users from the system. Super Admins can also impersonate users.
             </CardDescription>
           </div>
-          {user.role === 'Super Admin' && (
+          {currentUser.role === 'Super Admin' && (
              <Button onClick={() => setIsAddUserDialogOpen(true)}>
                 <UserPlus className="mr-2 h-4 w-4" /> Add New User
              </Button>
@@ -108,21 +115,42 @@ export default function UserManagementPage() {
             </TableHeader>
             <TableBody>
               {displayedUsers.map((u) => (
-                <TableRow key={u.id}>
+                <TableRow key={u.id} className={cn(isImpersonating && originalUser?.id === u.id && "bg-yellow-100 dark:bg-yellow-800/30")}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
                         <AvatarImage src={`https://picsum.photos/seed/${u.id}/36/36`} alt={u.name} data-ai-hint="user avatar"/>
                         <AvatarFallback>{getInitials(u.name)}</AvatarFallback>
                       </Avatar>
-                      <span className="font-medium">{u.name}</span>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{u.name}</span>
+                        {isImpersonating && originalUser?.id === u.id && <span className="text-xs text-yellow-600 dark:text-yellow-400">(Your Original Account)</span>}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>{u.email}</TableCell>
                   <TableCell>{u.role}</TableCell>
                   <TableCell>{u.vocation || 'N/A'}</TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" title="Edit User (Not Implemented)" disabled={user.role !== 'Super Admin' && u.role === 'Super Admin'}>
+                  <TableCell className="text-right space-x-1">
+                    {currentUser.role === 'Super Admin' && u.id !== currentUser.id && u.id !== originalUser?.id && (
+                      <Button variant="outline" size="sm" onClick={() => handleImpersonate(u)} title={`Impersonate ${u.name}`}>
+                        <Eye className="mr-1 h-4 w-4" /> Impersonate
+                      </Button>
+                    )}
+                     {isImpersonating && currentUser.id === u.id && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500 text-black">
+                           <UserCheck className="mr-1 h-3 w-3" /> Currently Impersonating
+                        </span>
+                    )}
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        title="Edit User (Not Implemented)" 
+                        disabled={
+                            currentUser.role !== 'Super Admin' || // Only SuperAdmins can edit
+                            (u.role === 'Super Admin' && u.id !== currentUser.id && u.id !== originalUser?.id) // SA can edit other SAs unless it's their original account during impersonation
+                        }
+                    >
                       <Edit className="h-4 w-4" />
                     </Button>
                     <Button 
@@ -131,9 +159,10 @@ export default function UserManagementPage() {
                         title="Remove User" 
                         className="text-destructive hover:text-destructive/80" 
                         disabled={
-                            user.role !== 'Super Admin' || // Only SuperAdmins can remove
-                            u.id === user.id || // Cannot remove self
-                            (u.role === 'Super Admin' && MOCK_ALL_USERS_DATABASE.filter(usr => usr.role === 'Super Admin').length <= 1) // Cannot remove the last SuperAdmin
+                            currentUser.role !== 'Super Admin' || 
+                            u.id === currentUser.id || // Cannot remove self (current active identity)
+                            u.id === originalUser?.id || // Cannot remove original SA account
+                            (u.role === 'Super Admin' && MOCK_ALL_USERS_DATABASE.filter(usr => usr.role === 'Super Admin').length <= 1)
                         }
                         onClick={() => handleRemoveUser(u.id)}
                     >
@@ -149,9 +178,9 @@ export default function UserManagementPage() {
             <p className="text-sm text-muted-foreground">Total users: {displayedUsers.length}</p>
         </CardFooter>
       </Card>
-      {user.role === 'Admin' && (
+      {currentUser.role === 'Admin' && !isImpersonating && ( // Show this message only if the actual logged-in user is Admin
         <p className="text-sm text-muted-foreground">
-            As an Admin, you can view users. Super Admins can add, edit, and remove users.
+            As an Admin, you can view users. Super Admins can add, edit, remove, and impersonate users.
         </p>
       )}
 
