@@ -107,21 +107,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <AppSidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
       <div className={`flex flex-1 flex-col transition-all duration-300 ease-in-out ${sidebarOpen ? 'md:ml-64' : 'md:ml-16'}`}>
         <AppHeader user={currentUser} toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} pageTitle={pageTitle} />
-        <main className="flex-1 overflow-y-auto">
-          <ScrollArea className="h-full">
+        <main className="flex-1 flex flex-col overflow-hidden"> {/* Changed: main is now a flex column and handles overflow */}
+          <ScrollArea className="flex-1 min-h-0"> {/* Changed: ScrollArea takes available space */}
             <div className="p-4 md:p-6 lg:p-8 space-y-6">
              {children}
             </div>
           </ScrollArea>
+          {/* Banner section moved inside main, after ScrollArea */}
+          {activeSpecialNotifications.length > 0 && (
+            <div className="p-4 md:p-6 lg:p-8 pt-0"> {/* Removed mt-auto, relies on flex order */}
+              <SpecialNotificationBanner
+                notifications={activeSpecialNotifications}
+                onDismiss={handleDismissSpecialNotification}
+              />
+            </div>
+          )}
         </main>
-         {activeSpecialNotifications.length > 0 && (
-          <div className="p-4 md:p-6 lg:p-8 pt-0 mt-auto">
-            <SpecialNotificationBanner
-              notifications={activeSpecialNotifications}
-              onDismiss={handleDismissSpecialNotification}
-            />
-          </div>
-        )}
       </div>
     </div>
   );
