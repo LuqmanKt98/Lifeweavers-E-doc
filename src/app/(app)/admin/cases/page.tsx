@@ -1,3 +1,4 @@
+
 // src/app/(app)/admin/cases/page.tsx
 "use client";
 
@@ -451,3 +452,4 @@ export default function CasesManagementPage() {
     </div>
   );
 }
+
