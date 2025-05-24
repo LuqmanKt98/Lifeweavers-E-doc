@@ -2,18 +2,19 @@
 // src/components/knowledge-base/KnowledgeBaseArticleDisplay.tsx
 "use client";
 
-import type { KnowledgeBaseArticle, Attachment } from '@/lib/types';
+import type { KnowledgeBaseArticle, Attachment, User } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { CalendarDays, UserCircle, Paperclip, Eye, FileText, Image as ImageIcon, Video, FileArchive, LinkIcon } from 'lucide-react';
+import { CalendarDays, UserCircle, Paperclip, Eye, FileText, Image as ImageIcon, Video, FileArchive, LinkIcon, Edit3, EyeOff } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import FilePreviewModal from '@/components/shared/FilePreviewModal';
 import { useState } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface KnowledgeBaseArticleDisplayProps {
   article: KnowledgeBaseArticle;
@@ -39,6 +40,7 @@ const getFileIcon = (fileType: Attachment['fileType']) => {
 };
 
 export default function KnowledgeBaseArticleDisplay({ article }: KnowledgeBaseArticleDisplayProps) {
+  const { currentUser } = useAuth();
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [selectedAttachment, setSelectedAttachment] = useState<Attachment | null>(null);
 
@@ -46,10 +48,12 @@ export default function KnowledgeBaseArticleDisplay({ article }: KnowledgeBaseAr
     setSelectedAttachment(attachment);
     setIsPreviewModalOpen(true);
   };
+
+  const canManageKB = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Super Admin');
   
   return (
     <>
-    <Card className="shadow-lg">
+    <Card className={cn("shadow-lg", !article.isPublished && canManageKB && "border-dashed border-amber-500 bg-amber-500/5")}>
       <CardHeader className="border-b pb-4">
         {article.coverImageUrl && (
           <div className="relative h-60 w-full mb-6 rounded-t-md overflow-hidden">
@@ -62,7 +66,23 @@ export default function KnowledgeBaseArticleDisplay({ article }: KnowledgeBaseAr
              />
           </div>
         )}
-        <CardTitle className="text-3xl font-bold text-primary">{article.title}</CardTitle>
+        <div className="flex justify-between items-start">
+            <CardTitle className="text-3xl font-bold text-primary">{article.title}</CardTitle>
+            {canManageKB && (
+                <div className="flex flex-col items-end gap-2">
+                     {!article.isPublished && (
+                        <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-300">
+                        <EyeOff className="mr-1 h-3 w-3" /> Draft - Not Visible to Others
+                        </Badge>
+                    )}
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href={`/admin/knowledge-base/${article.id}/edit`}>
+                            <Edit3 className="mr-2 h-4 w-4" /> Edit Article
+                        </Link>
+                    </Button>
+                </div>
+            )}
+        </div>
         <div className="text-sm text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
           <div className="flex items-center gap-2">
             <Avatar className="h-8 w-8">
@@ -73,11 +93,21 @@ export default function KnowledgeBaseArticleDisplay({ article }: KnowledgeBaseAr
           </div>
           <div className="flex items-center gap-1">
             <CalendarDays className="h-4 w-4" />
-            <span>Published: {format(new Date(article.publishedAt || article.createdAt), 'PPP')}</span>
+            <span>
+              {article.isPublished && article.publishedAt 
+                ? `Published: ${format(new Date(article.publishedAt), 'PPP')}`
+                : `Created: ${format(new Date(article.createdAt), 'PPP')}`}
+            </span>
           </div>
           {article.updatedAt && article.updatedAt !== article.createdAt && (
             <div className="flex items-center gap-1 text-xs">
               <span>(Updated: {format(new Date(article.updatedAt), 'PPP')})</span>
+            </div>
+          )}
+           {article.viewCount !== undefined && (
+            <div className="flex items-center gap-1 text-xs">
+              <Eye className="h-3 w-3" />
+              <span>{article.viewCount} views</span>
             </div>
           )}
         </div>

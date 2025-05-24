@@ -7,15 +7,15 @@ import type { Resource } from '@/lib/types';
 import { MOCK_RESOURCES_DB } from '@/lib/mockDatabase';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button'; // Added Button
-import { Package, Search, AlertCircle, PlusCircle } from 'lucide-react'; // Added PlusCircle
+import { Button } from '@/components/ui/button';
+import { Package, Search, AlertCircle, PlusCircle, Edit3 } from 'lucide-react';
 import ResourceListItem from '@/components/resources/ResourceListItem';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast'; // Added useToast
+import Link from 'next/link';
+
 
 export default function ResourcesPage() {
   const { user } = useAuth(); 
-  const { toast } = useToast(); // Initialize toast
   const [searchTerm, setSearchTerm] = useState('');
   const [resources, setResources] = useState<Resource[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -23,13 +23,16 @@ export default function ResourcesPage() {
   useEffect(() => {
     // Simulate fetching resources
     setTimeout(() => {
-      const publishedResources = MOCK_RESOURCES_DB
-        .filter(resource => resource.isPublished)
-        .sort((a, b) => new Date(b.publishedAt || b.createdAt).getTime() - new Date(a.publishedAt || a.createdAt).getTime());
-      setResources(publishedResources);
+      const relevantResources = user && (user.role === 'Admin' || user.role === 'Super Admin')
+        ? MOCK_RESOURCES_DB // Admins see all
+        : MOCK_RESOURCES_DB.filter(resource => resource.isPublished); // Others see only published
+      
+      setResources(
+        relevantResources.sort((a, b) => new Date(b.publishedAt || b.createdAt).getTime() - new Date(a.publishedAt || a.createdAt).getTime())
+      );
       setIsLoading(false);
     }, 300);
-  }, []);
+  }, [user]);
 
   const filteredResources = resources.filter(resource =>
     resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -41,14 +44,6 @@ export default function ResourcesPage() {
 
   const canManageResources = user && (user.role === 'Admin' || user.role === 'Super Admin');
 
-  const handleAddNewResource = () => {
-    toast({
-        title: "Feature Not Implemented",
-        description: "Creating new resources will be available soon.",
-        variant: "default",
-    });
-  };
-
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">
@@ -58,12 +53,14 @@ export default function ResourcesPage() {
                 <Package className="h-7 w-7" /> Resources
               </CardTitle>
               <CardDescription>
-                Discover useful documents, links, tools, and guides shared by the team.
+                {canManageResources ? "Manage and browse resources." : "Discover useful documents, links, tools, and guides shared by the team." }
               </CardDescription>
             </div>
             {canManageResources && (
-                <Button onClick={handleAddNewResource} variant="default">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add New Resource
+                <Button asChild variant="default">
+                    <Link href="/admin/resources/new">
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add New Resource
+                    </Link>
                 </Button>
             )}
         </CardHeader>
@@ -88,7 +85,7 @@ export default function ResourcesPage() {
           ) : filteredResources.length > 0 ? (
             <div className="space-y-4">
               {filteredResources.map(resource => (
-                <ResourceListItem key={resource.id} resource={resource} />
+                <ResourceListItem key={resource.id} resource={resource} currentUser={user}/>
               ))}
             </div>
           ) : (
@@ -98,7 +95,7 @@ export default function ResourcesPage() {
                 {searchTerm ? "No resources match your search." : "No resources found."}
               </p>
               <p className="text-sm">
-                {searchTerm ? "Try different keywords or check back later." : "The resource library is currently empty or no resources are published."}
+                {searchTerm ? "Try different keywords or check back later." : (canManageResources ? "Add a new resource to get started." : "The resource library is currently empty or no resources are published.")}
               </p>
             </div>
           )}

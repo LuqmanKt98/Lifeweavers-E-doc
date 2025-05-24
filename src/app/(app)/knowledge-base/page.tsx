@@ -4,18 +4,17 @@
 
 import { useState, useEffect } from 'react';
 import type { KnowledgeBaseArticle } from '@/lib/types';
-import { MOCK_KNOWLEDGE_BASE_ARTICLES_DB, MOCK_ALL_USERS_DATABASE } from '@/lib/mockDatabase';
+import { MOCK_KNOWLEDGE_BASE_ARTICLES_DB } from '@/lib/mockDatabase';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button'; // Added Button
-import { BookOpen, Search, AlertCircle, PlusCircle } from 'lucide-react'; // Added PlusCircle
+import { Button } from '@/components/ui/button';
+import { BookOpen, Search, AlertCircle, PlusCircle, Edit3 } from 'lucide-react';
 import KnowledgeBaseListItem from '@/components/knowledge-base/KnowledgeBaseListItem';
 import { useAuth } from '@/contexts/AuthContext'; 
-import { useToast } from '@/hooks/use-toast'; // Added useToast
+import Link from 'next/link';
 
 export default function KnowledgeBasePage() {
   const { user } = useAuth(); 
-  const { toast } = useToast(); // Initialize toast
   const [searchTerm, setSearchTerm] = useState('');
   const [articles, setArticles] = useState<KnowledgeBaseArticle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -23,13 +22,16 @@ export default function KnowledgeBasePage() {
   useEffect(() => {
     // Simulate fetching articles
     setTimeout(() => {
-      const publishedArticles = MOCK_KNOWLEDGE_BASE_ARTICLES_DB
-        .filter(article => article.isPublished)
-        .sort((a, b) => new Date(b.publishedAt || b.createdAt).getTime() - new Date(a.publishedAt || a.createdAt).getTime());
-      setArticles(publishedArticles);
+      const relevantArticles = user && (user.role === 'Admin' || user.role === 'Super Admin')
+        ? MOCK_KNOWLEDGE_BASE_ARTICLES_DB // Admins see all articles
+        : MOCK_KNOWLEDGE_BASE_ARTICLES_DB.filter(article => article.isPublished); // Others see only published
+
+      setArticles(
+        relevantArticles.sort((a, b) => new Date(b.publishedAt || b.createdAt).getTime() - new Date(a.publishedAt || a.createdAt).getTime())
+      );
       setIsLoading(false);
     }, 300);
-  }, []);
+  }, [user]);
 
   const filteredArticles = articles.filter(article =>
     article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -40,14 +42,6 @@ export default function KnowledgeBasePage() {
 
   const canManageKB = user && (user.role === 'Admin' || user.role === 'Super Admin');
 
-  const handleAddNewArticle = () => {
-    toast({
-        title: "Feature Not Implemented",
-        description: "Creating new knowledge base articles will be available soon.",
-        variant: "default",
-    });
-  };
-
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">
@@ -57,12 +51,14 @@ export default function KnowledgeBasePage() {
               <BookOpen className="h-7 w-7" /> Knowledge Base
             </CardTitle>
             <CardDescription>
-              Find helpful articles, guides, and resources shared by the team.
+              {canManageKB ? "Manage and browse articles." : "Find helpful articles, guides, and resources shared by the team."}
             </CardDescription>
           </div>
           {canManageKB && (
-            <Button onClick={handleAddNewArticle} variant="default">
-              <PlusCircle className="mr-2 h-4 w-4" /> Create New Article
+            <Button asChild variant="default">
+              <Link href="/admin/knowledge-base/new">
+                <PlusCircle className="mr-2 h-4 w-4" /> Create New Article
+              </Link>
             </Button>
           )}
         </CardHeader>
@@ -87,7 +83,7 @@ export default function KnowledgeBasePage() {
           ) : filteredArticles.length > 0 ? (
             <div className="space-y-4">
               {filteredArticles.map(article => (
-                <KnowledgeBaseListItem key={article.id} article={article} />
+                <KnowledgeBaseListItem key={article.id} article={article} currentUser={user} />
               ))}
             </div>
           ) : (
@@ -97,7 +93,7 @@ export default function KnowledgeBasePage() {
                 {searchTerm ? "No articles match your search." : "No articles found."}
               </p>
               <p className="text-sm">
-                {searchTerm ? "Try different keywords or check back later." : "The knowledge base is currently empty or no articles are published."}
+                {searchTerm ? "Try different keywords or check back later." : (canManageKB ? "Create a new article to get started." : "The knowledge base is currently empty or no articles are published.")}
               </p>
             </div>
           )}
