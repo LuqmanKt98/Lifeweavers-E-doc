@@ -5,9 +5,10 @@ import { useState, useMemo } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { SessionNote } from '@/lib/types';
-import { format, isSameDay } from 'date-fns';
+import { format, isSameDay, parseISO } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Clock } from 'lucide-react';
+import { MOCK_CLIENTS_DB } from '@/lib/mockDatabase'; // Import MOCK_CLIENTS_DB
 
 interface EventCalendarProps {
   sessions: SessionNote[];
@@ -25,7 +26,7 @@ export default function EventCalendar({ sessions }: EventCalendarProps) {
     if (!selectedDate) return [];
     return sessions
       .filter(session => isSameDay(new Date(session.dateOfSession), selectedDate))
-      .sort((a, b) => new Date(a.dateOfSession).getTime() - new Date(b.dateOfSession).getTime()); // Sort by time if available, otherwise date
+      .sort((a, b) => new Date(a.dateOfSession).getTime() - new Date(b.dateOfSession).getTime());
   }, [selectedDate, sessions]);
 
   const modifiers = {
@@ -33,24 +34,25 @@ export default function EventCalendar({ sessions }: EventCalendarProps) {
   };
 
   const modifiersClassNames = {
-    hasSession: 'day-with-session', // Custom class for days with sessions, styled in globals.css
+    hasSession: 'day-with-session',
   };
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
       setSelectedDate(date);
-      // Optional: if you want the calendar to jump to the month of the selected date
-      // if (date.getMonth() !== currentMonth.getMonth() || date.getFullYear() !== currentMonth.getFullYear()) {
-      //   setCurrentMonth(date);
-      // }
     } else {
       setSelectedDate(undefined);
     }
+  };
+
+  const getClientName = (clientId: string): string => {
+    return MOCK_CLIENTS_DB[clientId]?.name || clientId;
   };
   
   return (
     <Card className="shadow-lg">
       <CardHeader>
+        {/* Title and Description remain unchanged as per previous requests */}
         <CardTitle className="flex items-center gap-2 text-xl font-semibold text-primary">
             <CalendarIcon className="h-6 w-6" /> Appointments
         </CardTitle>
@@ -59,7 +61,7 @@ export default function EventCalendar({ sessions }: EventCalendarProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col lg:flex-row gap-6">
-        <div className="lg:w-[calc(50%-0.75rem)] xl:w-[calc(40%-0.75rem)]"> {/* Calendar container */}
+        <div className="lg:w-[calc(50%-0.75rem)] xl:w-[calc(40%-0.75rem)]">
           <Calendar
             mode="single"
             selected={selectedDate}
@@ -68,14 +70,14 @@ export default function EventCalendar({ sessions }: EventCalendarProps) {
             onMonthChange={setCurrentMonth}
             modifiers={modifiers}
             modifiersClassNames={modifiersClassNames}
-            className="rounded-md border bg-card p-0 sm:p-1" // Adjusted padding for smaller screens
+            className="rounded-md border bg-card p-0 sm:p-1"
             numberOfMonths={1}
             pagedNavigation
             showOutsideDays
             fixedWeeks
           />
         </div>
-        <div className="lg:w-[calc(50%-0.75rem)] xl:w-[calc(60%-0.75rem)]"> {/* Session list container */}
+        <div className="lg:w-[calc(50%-0.75rem)] xl:w-[calc(60%-0.75rem)]">
           <h3 className="text-lg font-semibold mb-3 text-foreground">
             Sessions on {selectedDate ? format(selectedDate, 'PPP') : 'selected date'}
           </h3>
@@ -85,15 +87,15 @@ export default function EventCalendar({ sessions }: EventCalendarProps) {
                 {sessionsOnSelectedDate.map(session => (
                   <li key={session.id} className="p-3 bg-card rounded-md shadow-sm hover:shadow-md transition-shadow">
                     <p className="font-medium text-sm text-primary">
-                      {session.attendingClinicianName}
+                      {getClientName(session.clientId)} / {session.attendingClinicianName}
                     </p>
-                    <p className="text-xs text-muted-foreground mb-1">
-                      Session {session.sessionNumber} with {session.clientId.startsWith('client-') ? `Client ${session.clientId.split('-')[1]}` : session.clientId} 
-                      {/* Using a simpler client name for now. In a real app, fetch client name. */}
-                    </p>
-                    <p className="text-xs italic text-foreground/80 line-clamp-2">
-                      {session.content.replace(/<[^>]*>/g, '') || 'No specific content details.'}
-                    </p>
+                    <div className="text-xs text-muted-foreground mt-1 flex items-center">
+                      <Clock className="mr-1.5 h-3.5 w-3.5" />
+                      <span>{format(parseISO(session.dateOfSession), 'HH:mm')}</span>
+                      {/* If you want to assume a 1-hour duration for display:
+                      <span>{format(parseISO(session.dateOfSession), 'HH:mm')} - {format(addHours(parseISO(session.dateOfSession), 1), 'HH:mm')}</span>
+                      */}
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -108,4 +110,3 @@ export default function EventCalendar({ sessions }: EventCalendarProps) {
     </Card>
   );
 }
-
