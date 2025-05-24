@@ -1,3 +1,4 @@
+
 // src/components/layout/AppSidebar.tsx
 "use client";
 
@@ -6,7 +7,7 @@ import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { Home, Users, Settings, ChevronLeft, ChevronRight, Bell, MessageSquare, LifeBuoy, FolderSync } from 'lucide-react';
+import { Home, Users, Settings, ChevronLeft, ChevronRight, Bell, MessageSquare, LifeBuoy, FolderSync, BookOpen } from 'lucide-react'; // Added BookOpen
 import { useAuth } from '@/contexts/AuthContext';
 
 interface AppSidebarProps {
@@ -20,6 +21,7 @@ export default function AppSidebar({ isOpen, toggleSidebar }: AppSidebarProps) {
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: Home },
+    { href: '/knowledge-base', label: 'Knowledge Base', icon: BookOpen }, // Added Knowledge Base link
     { href: '/notifications', label: 'Notifications', icon: Bell },
     { href: '/messages', label: 'Messages', icon: MessageSquare },
   ];
@@ -31,6 +33,7 @@ export default function AppSidebar({ isOpen, toggleSidebar }: AppSidebarProps) {
     if (!navItems.find(item => item.href === '/admin/cases')) {
       navItems.push({ href: '/admin/cases', label: 'Cases Management', icon: FolderSync });
     }
+    // Future: Add link to /admin/knowledge-base for admins to manage articles
   }
   
   const commonLinkClasses = "flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors";
@@ -81,7 +84,9 @@ export default function AppSidebar({ isOpen, toggleSidebar }: AppSidebarProps) {
                 href={item.href}
                 className={cn(
                   commonLinkClasses,
-                  pathname === item.href ? activeLinkClasses : inactiveLinkClasses,
+                  pathname === item.href || (item.href === '/knowledge-base' && pathname.startsWith('/knowledge-base')) 
+                    ? activeLinkClasses 
+                    : inactiveLinkClasses,
                   !isOpen && "justify-center"
                 )}
                 title={isOpen ? "" : item.label}

@@ -1,7 +1,7 @@
 
 // src/lib/mockDatabase.ts
-import type { Client, SessionNote, User, ToDoTask, Attachment } from '@/lib/types';
-import { format, addDays, startOfDay } from 'date-fns';
+import type { Client, SessionNote, User, ToDoTask, Attachment, Notification, MessageThread, Message, KnowledgeBaseArticle } from '@/lib/types';
+import { format, addDays, startOfDay, subDays } from 'date-fns';
 
 // --- Centralized Mock Users ---
 // This list includes all potential users, including those for selection in various parts of the app.
@@ -139,4 +139,103 @@ export const MOCK_FILE_TEMPLATES: Omit<Attachment, 'id' | 'url' | 'previewUrl'>[
   { name: "Posture Analysis.jpg", mimeType: "image/jpeg", fileType: "image" },
   { name: "Range of Motion.mp4", mimeType: "video/mp4", fileType: "video" },
   { name: "Presentation Summary.pptx", mimeType: "application/vnd.openxmlformats-officedocument.presentationml.presentation", fileType: "presentation" },
+];
+
+
+// --- Centralized Mock Knowledge Base Articles ---
+export let MOCK_KNOWLEDGE_BASE_ARTICLES_DB: KnowledgeBaseArticle[] = [
+  {
+    id: 'kb-article-1',
+    slug: 'understanding-lower-back-pain',
+    title: 'Understanding Lower Back Pain: Causes and Initial Management',
+    content: '<h2>Common Causes</h2><p>Lower back pain can arise from various factors including muscle strains, ligament sprains, disc herniation, or degenerative conditions like osteoarthritis...</p><h3>Muscle Strains</h3><p>Often caused by sudden movements or overuse...</p><h2>Initial Management</h2><p>Rest, ice, and gentle mobilization exercises are typically recommended...</p><p>For more details, watch this <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" rel="noopener noreferrer">informative video</a>.</p>',
+    excerpt: 'An overview of common causes for lower back pain and how to initially manage symptoms.',
+    authorId: 'user_superadmin',
+    authorName: 'Dr. Super Admin',
+    createdAt: subDays(new Date(), 5).toISOString(),
+    updatedAt: subDays(new Date(), 2).toISOString(),
+    publishedAt: subDays(new Date(), 2).toISOString(),
+    isPublished: true,
+    tags: ['lower back pain', 'physiotherapy', 'self-management'],
+    coverImageUrl: 'https://placehold.co/600x400.png',
+    attachments: [
+      { id: 'kb-att-1-1', name: 'LBP_Exercises.pdf', mimeType: 'application/pdf', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', fileType: 'pdf' }
+    ],
+    viewCount: 152,
+  },
+  {
+    id: 'kb-article-2',
+    slug: 'ergonomics-for-remote-workers',
+    title: 'Ergonomics for Remote Workers: Setting Up Your Home Office',
+    content: '<h2>Key Principles</h2><p>Proper chair height, monitor placement, and keyboard/mouse positioning are crucial for preventing musculoskeletal issues...</p><img src="https://placehold.co/400x250.png" alt="Ergonomic Setup" data-ai-hint="ergonomics office" /><h2>Tips for Success</h2><ul><li>Take regular breaks</li><li>Ensure good lighting</li><li>Consider a standing desk</li></ul>',
+    excerpt: 'Tips and guidelines for setting up an ergonomic home office to prevent strain and improve productivity.',
+    authorId: 'user_admin',
+    authorName: 'Alex Admin',
+    createdAt: subDays(new Date(), 10).toISOString(),
+    updatedAt: subDays(new Date(), 3).toISOString(),
+    publishedAt: subDays(new Date(), 3).toISOString(),
+    isPublished: true,
+    tags: ['ergonomics', 'remote work', 'home office', 'prevention'],
+    coverImageUrl: 'https://placehold.co/600x400.png',
+    viewCount: 230,
+  },
+  {
+    id: 'kb-article-3',
+    slug: 'introduction-to-mindfulness',
+    title: 'Introduction to Mindfulness for Stress Reduction',
+    content: '<h2>What is Mindfulness?</h2><p>Mindfulness is the practice of paying attention to the present moment without judgment. It can be a powerful tool for managing stress and improving overall well-being.</p>',
+    excerpt: 'A beginner\'s guide to understanding mindfulness and its benefits for stress reduction.',
+    authorId: 'user_clinician2',
+    authorName: 'Jamie Therapist',
+    createdAt: subDays(new Date(), 2).toISOString(),
+    updatedAt: subDays(new Date(), 1).toISOString(),
+    publishedAt: subDays(new Date(), 1).toISOString(),
+    isPublished: true,
+    tags: ['mindfulness', 'stress reduction', 'mental health'],
+    viewCount: 98,
+  },
+  {
+    id: 'kb-article-4',
+    slug: 'managing-shoulder-impingement',
+    title: 'Managing Shoulder Impingement: Exercises and Advice',
+    content: '<h2>Understanding Shoulder Impingement</h2><p>This condition occurs when tendons of the rotator cuff get trapped and compressed during shoulder movements...</p>',
+    excerpt: 'Learn about shoulder impingement syndrome and effective exercises for rehabilitation.',
+    authorId: 'user_clinician',
+    authorName: 'Casey Clinician',
+    createdAt: subDays(new Date(), 15).toISOString(),
+    updatedAt: subDays(new Date(), 15).toISOString(),
+    isPublished: false, // Draft article
+    tags: ['shoulder pain', 'rehabilitation', 'exercises'],
+  },
+    {
+    id: 'kb-article-5',
+    slug: 'pediatric-speech-therapy-techniques',
+    title: 'Effective Techniques in Pediatric Speech Therapy',
+    content: '<h2>Play-Based Learning</h2><p>Utilizing games and interactive activities to engage children and promote language development...</p>',
+    excerpt: 'Exploring various techniques used in speech therapy for children, focusing on engagement and outcomes.',
+    authorId: 'user_new1',
+    authorName: 'Taylor New',
+    createdAt: subDays(new Date(), 7).toISOString(),
+    updatedAt: subDays(new Date(), 4).toISOString(),
+    publishedAt: subDays(new Date(), 4).toISOString(),
+    isPublished: true,
+    tags: ['speech therapy', 'pediatrics', 'child development'],
+    coverImageUrl: 'https://placehold.co/600x400.png',
+    viewCount: 120,
+  },
+  {
+    id: 'kb-article-6',
+    slug: 'latest-advances-in-physiotherapy',
+    title: 'Latest Advances in Physiotherapy Technology',
+    content: '<h2>Tele-rehabilitation</h2><p>The rise of remote therapy sessions and its benefits...</p><h2>Wearable Technology</h2><p>How wearables are aiding in monitoring and recovery...</p>',
+    excerpt: 'A look into new technologies shaping the future of physiotherapy.',
+    authorId: 'user_superadmin',
+    authorName: 'Dr. Super Admin',
+    createdAt: subDays(new Date(), 1).toISOString(),
+    updatedAt: subDays(new Date(), 0).toISOString(),
+    publishedAt: subDays(new Date(), 0).toISOString(),
+    isPublished: true,
+    tags: ['physiotherapy', 'technology', 'innovation'],
+    viewCount: 75,
+  },
 ];

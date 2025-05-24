@@ -1,20 +1,20 @@
+
 // src/components/dashboards/ClinicianDashboard.tsx
 "use client";
 
-import type { User, Client } from '@/lib/types'; // SessionNote import removed
+import type { User, Client, KnowledgeBaseArticle } from '@/lib/types'; // Added KnowledgeBaseArticle
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Users, Briefcase, Clock, ArrowRight } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-// EventCalendar import removed
+import { Users, Briefcase, Clock, ArrowRight, BookOpen, FileText } from 'lucide-react'; // Added BookOpen, FileText
+import { formatDistanceToNow, format } from 'date-fns';
+import { MOCK_KNOWLEDGE_BASE_ARTICLES_DB } from '@/lib/mockDatabase'; // Import mock KB data
 
 interface ClinicianDashboardProps {
   user: User;
   clients: Client[];
   team: User[];
-  // sessions prop (if any for calendar) removed, handled by DashboardPage
 }
 
 export default function ClinicianDashboard({ user, clients, team }: ClinicianDashboardProps) {
@@ -26,11 +26,14 @@ export default function ClinicianDashboard({ user, clients, team }: ClinicianDas
     return names[0][0].toUpperCase() + names[names.length - 1][0].toUpperCase();
   };
 
+  const latestKnowledgeBaseArticles = MOCK_KNOWLEDGE_BASE_ARTICLES_DB
+    .filter(article => article.isPublished)
+    .sort((a, b) => new Date(b.publishedAt || b.createdAt).getTime() - new Date(a.publishedAt || a.createdAt).getTime())
+    .slice(0, 5);
+
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {/* EventCalendar rendering removed from here */}
-
-      <Card className="lg:col-span-2 md:col-span-2"> {/* Adjusted span */}
+      <Card className="lg:col-span-2 md:col-span-2">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-6 w-6 text-primary" />
@@ -68,7 +71,45 @@ export default function ClinicianDashboard({ user, clients, team }: ClinicianDas
         </CardContent>
       </Card>
 
-      <Card className="md:col-span-1"> {/* Adjusted span */}
+      <Card className="md:col-span-1">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BookOpen className="h-6 w-6 text-primary" />
+            Latest Knowledge
+          </CardTitle>
+          <CardDescription>Recent updates from the Knowledge Base.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {latestKnowledgeBaseArticles.length > 0 ? (
+            <ul className="space-y-3">
+              {latestKnowledgeBaseArticles.map(article => (
+                <li key={article.id} className="p-2.5 bg-secondary/30 hover:bg-secondary/60 rounded-lg transition-colors">
+                  <Link href={`/knowledge-base/${article.id}`} className="block group">
+                    <div className="flex items-start gap-2">
+                      <FileText className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors line-clamp-2">{article.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          By {article.authorName} - {format(new Date(article.publishedAt || article.createdAt), 'MMM d, yyyy')}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-muted-foreground">No knowledge base articles found.</p>
+          )}
+           {latestKnowledgeBaseArticles.length > 0 && (
+             <Button variant="link" asChild className="mt-3 px-0">
+               <Link href="/knowledge-base">View All Articles <ArrowRight className="ml-1 h-3 w-3" /></Link>
+             </Button>
+           )}
+        </CardContent>
+      </Card>
+      
+      <Card className="lg:col-span-3 md:col-span-2"> {/* Changed span for team details to take full width */}
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Briefcase className="h-6 w-6 text-primary" />
@@ -78,11 +119,11 @@ export default function ClinicianDashboard({ user, clients, team }: ClinicianDas
         </CardHeader>
         <CardContent>
           {team.filter(member => member.id !== user.id).length > 0 ? (
-             <ul className="space-y-3">
-              {team.filter(member => member.id !== user.id).slice(0,5).map((member) => ( // Show up to 5 team members
-                <li key={member.id} className="flex items-center gap-3 p-2 bg-secondary/30 rounded-md">
-                  <Avatar className="h-9 w-9">
-                     <AvatarImage src={`https://picsum.photos/seed/${member.id}/36/36`} alt={member.name} data-ai-hint="professional team" />
+             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {team.filter(member => member.id !== user.id).map((member) => ( 
+                <li key={member.id} className="flex items-center gap-3 p-3 bg-secondary/30 rounded-lg list-none">
+                  <Avatar className="h-10 w-10">
+                     <AvatarImage src={`https://picsum.photos/seed/${member.id}/40/40`} alt={member.name} data-ai-hint="professional team" />
                     <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
                   </Avatar>
                   <div>
@@ -91,7 +132,7 @@ export default function ClinicianDashboard({ user, clients, team }: ClinicianDas
                   </div>
                 </li>
               ))}
-            </ul>
+            </div>
           ) : (
             <p className="text-muted-foreground">Team information is not available at the moment.</p>
           )}

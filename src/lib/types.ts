@@ -122,3 +122,22 @@ export interface ProgressReviewReport {
   generatedByUserName: string;
   reportHtmlContent: string; // AI-generated report text in HTML format
 }
+
+// Knowledge Base Article
+export interface KnowledgeBaseArticle {
+  id: string;
+  slug: string; // URL-friendly identifier
+  title: string;
+  content: string; // HTML content
+  excerpt?: string; // Short summary
+  authorId: string;
+  authorName: string;
+  createdAt: string; // ISO string
+  updatedAt: string; // ISO string
+  publishedAt?: string; // ISO string, if published
+  isPublished: boolean;
+  tags?: string[];
+  coverImageUrl?: string;
+  attachments?: Attachment[];
+  viewCount?: number;
+}
